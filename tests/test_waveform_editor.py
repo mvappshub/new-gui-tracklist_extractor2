@@ -14,13 +14,6 @@ from waveform_viewer import WaveformEditorDialog
 
 
 @pytest.fixture(autouse=True)
-def _ensure_test_config(isolated_config, monkeypatch):
-    """Ensure waveform_viewer uses the isolated configuration for editor tests."""
-    monkeypatch.setattr(waveform_viewer, "cfg", isolated_config, raising=False)
-    return isolated_config
-
-
-@pytest.fixture(autouse=True)
 def fake_multimedia(monkeypatch):
     """Provide dummy multimedia classes so tests run without QtMultimedia."""
 
@@ -77,10 +70,10 @@ def fake_multimedia(monkeypatch):
 
 
 @pytest.fixture
-def editor_dialog(qapp, mock_wav_zip, qtbot) -> WaveformEditorDialog:
+def editor_dialog(qapp, mock_wav_zip, qtbot, waveform_settings) -> WaveformEditorDialog:
     """Create a fully initialised WaveformEditorDialog for tests."""
     zip_path, wav_name = mock_wav_zip
-    dialog = WaveformEditorDialog(zip_path, wav_name)
+    dialog = WaveformEditorDialog(zip_path, wav_name, waveform_settings)
     qtbot.addWidget(dialog)
     try:
         yield dialog
@@ -97,7 +90,7 @@ class TestWaveformEditorDialog:
         assert editor_dialog.width() == 1200
         assert editor_dialog.height() == 800
 
-    def test_multimedia_unavailable(self, monkeypatch, mock_wav_zip):
+    def test_multimedia_unavailable(self, monkeypatch, mock_wav_zip, waveform_settings):
         zip_path, wav_name = mock_wav_zip
         monkeypatch.setattr(waveform_viewer, "_MULTIMEDIA_AVAILABLE", False)
         monkeypatch.setattr(
@@ -105,7 +98,7 @@ class TestWaveformEditorDialog:
         )
         with mock.patch.object(QMessageBox, "critical") as critical:
             with pytest.raises(RuntimeError):
-                WaveformEditorDialog(zip_path, wav_name)
+                WaveformEditorDialog(zip_path, wav_name, waveform_settings)
         critical.assert_called_once()
         monkeypatch.setattr(waveform_viewer, "_MULTIMEDIA_AVAILABLE", True)
 
@@ -171,7 +164,7 @@ class TestWaveformEditorDialog:
         assert editor_dialog._playhead_line is not None
         assert pytest.approx(editor_dialog._playhead_line.value(), rel=1e-3) == 0.5
 
-    def test_set_pdf_tracks_creates_markers(self, editor_dialog):
+    def test_set_pdf_tracks_creates_markers(self, editor_dialog, tolerance_settings):
         pdf_tracks = [
             {"duration_sec": 0.5, "title": "Intro", "position": 1},
             {"duration_sec": 1.0, "title": "Main", "position": 2},
@@ -180,15 +173,15 @@ class TestWaveformEditorDialog:
             {"duration_sec": 0.52, "title": "Intro", "position": 1},
             {"duration_sec": 1.05, "title": "Main", "position": 2},
         ]
-        editor_dialog.set_pdf_tracks(pdf_tracks, wav_tracks)
+        editor_dialog.set_pdf_tracks(pdf_tracks, wav_tracks, tolerance_settings)
         assert len(editor_dialog._pdf_markers) == len(pdf_tracks)
         assert len(editor_dialog._marker_times) == len(pdf_tracks)
         assert pytest.approx(editor_dialog._marker_times[0], rel=1e-3) == pytest.approx(0.5, rel=1e-3)
         assert pytest.approx(editor_dialog._marker_times[1], rel=1e-3) == pytest.approx(1.5, rel=1e-3)
 
-    def test_clear_pdf_markers(self, editor_dialog):
+    def test_clear_pdf_markers(self, editor_dialog, tolerance_settings):
         pdf_tracks = [{"duration_sec": 0.5, "title": "Intro", "position": 1}]
-        editor_dialog.set_pdf_tracks(pdf_tracks, pdf_tracks)
+        editor_dialog.set_pdf_tracks(pdf_tracks, pdf_tracks, tolerance_settings)
         assert editor_dialog._pdf_markers
         editor_dialog._clear_pdf_markers()
         assert not editor_dialog._pdf_markers
@@ -244,21 +237,21 @@ class TestWaveformEditorDialog:
         if temp_wav:
             assert not temp_wav.exists()
 
-    def test_missing_zip_file(self, tmp_path, qtbot):
+    def test_missing_zip_file(self, tmp_path, qtbot, waveform_settings):
         non_existent = tmp_path / "missing.zip"
         with mock.patch.object(QMessageBox, "critical") as critical:
             with pytest.raises(FileNotFoundError):
-                WaveformEditorDialog(non_existent, "track.wav")
+                WaveformEditorDialog(non_existent, "track.wav", waveform_settings)
         critical.assert_not_called()
 
-    def test_missing_wav_in_zip(self, empty_zip, qtbot):
+    def test_missing_wav_in_zip(self, empty_zip, qtbot, waveform_settings):
         with pytest.raises(FileNotFoundError):
-            WaveformEditorDialog(empty_zip, "missing.wav")
+            WaveformEditorDialog(empty_zip, "missing.wav", waveform_settings)
 
-    def test_invalid_audio_data(self, invalid_wav_zip):
+    def test_invalid_audio_data(self, invalid_wav_zip, waveform_settings):
         zip_path, wav_name = invalid_wav_zip
         with mock.patch.object(QMessageBox, "critical") as critical:
-            dialog = WaveformEditorDialog(zip_path, wav_name)
+            dialog = WaveformEditorDialog(zip_path, wav_name, waveform_settings)
         critical.assert_called()
         assert not dialog.play_button.isEnabled()
         dialog.close()

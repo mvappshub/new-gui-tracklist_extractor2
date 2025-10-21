@@ -19,8 +19,10 @@ from config import cfg, load_config
 from ui.main_window import MainWindow
 from ui.config_models import (
     load_tolerance_settings,
+    load_id_extraction_settings,
     load_export_settings,
     load_theme_settings,
+    load_waveform_settings,
     load_worker_settings,
 )
 from ui.workers.worker_manager import AnalysisWorkerManager
@@ -71,11 +73,17 @@ def main(config_path: Optional[Path] = None):
     load_config(config_path)
 
     tolerance_settings = load_tolerance_settings(cfg)
+    id_extraction_settings = load_id_extraction_settings(cfg)
     export_settings = load_export_settings(cfg)
     theme_settings = load_theme_settings(cfg)
+    waveform_settings = load_waveform_settings(cfg)
     worker_settings = load_worker_settings(cfg)
 
-    worker_manager = AnalysisWorkerManager(worker_settings=worker_settings)
+    worker_manager = AnalysisWorkerManager(
+        worker_settings=worker_settings,
+        tolerance_settings=tolerance_settings,
+        id_extraction_settings=id_extraction_settings,
+    )
     load_gz_media_fonts(app, font_family=theme_settings.font_family, font_size=theme_settings.font_size)
     load_gz_media_stylesheet(app, stylesheet_path=theme_settings.stylesheet_path)
 
@@ -83,6 +91,7 @@ def main(config_path: Optional[Path] = None):
         tolerance_settings=tolerance_settings,
         export_settings=export_settings,
         theme_settings=theme_settings,
+        waveform_settings=waveform_settings,
         worker_manager=worker_manager,
         settings_filename=config_path,
     )

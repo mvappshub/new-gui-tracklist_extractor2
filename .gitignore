@@ -36,3 +36,4 @@ exports/
 
 #Ignore insiders AI rules
 .github\instructions\codacy.instructions.md
+node_modules

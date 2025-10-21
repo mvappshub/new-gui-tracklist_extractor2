@@ -56,6 +56,8 @@ from ui import (
     load_gz_media_fonts as _ui_load_fonts,
     load_gz_media_stylesheet as _ui_load_stylesheet,
     load_theme_settings,
+    load_id_extraction_settings,
+    load_waveform_settings,
     load_tolerance_settings,
     load_worker_settings,
     SettingsDialog as UISettingsDialog,
@@ -164,18 +166,25 @@ class MainWindow(UIMainWindow):
         export_settings = load_export_settings(cfg)
         theme_settings = load_theme_settings(cfg)
         worker_settings = load_worker_settings(cfg)
+        id_extraction_settings = load_id_extraction_settings(cfg)
+        waveform_settings = load_waveform_settings(cfg)
 
         app = QApplication.instance()
         if app is not None:
             _ui_load_fonts(app, theme_settings.font_family, theme_settings.font_size)
             _ui_load_stylesheet(app, theme_settings.stylesheet_path)
 
-        worker_manager = AnalysisWorkerManager(worker_settings=worker_settings)
+        worker_manager = AnalysisWorkerManager(
+            worker_settings=worker_settings,
+            tolerance_settings=tolerance_settings,
+            id_extraction_settings=id_extraction_settings,
+        )
 
         super().__init__(
             tolerance_settings=tolerance_settings,
             export_settings=export_settings,
             theme_settings=theme_settings,
+            waveform_settings=waveform_settings,
             worker_manager=worker_manager,
             settings_filename=SETTINGS_FILENAME,
         )

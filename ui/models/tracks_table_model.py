@@ -7,7 +7,7 @@ from PyQt6.QtGui import QFont, QPalette
 from PyQt6.QtWidgets import QApplication
 
 from core.models.analysis import SideResult
-from ui.config_models import ToleranceSettings
+from core.models.settings import ToleranceSettings
 from ui.constants import (
     LABEL_TOTAL_TRACKS,
     PLACEHOLDER_DASH,

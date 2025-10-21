@@ -8,6 +8,7 @@ from adapters.filesystem.file_discovery import discover_and_pair_files
 from core.domain.comparison import compare_data
 from core.domain.extraction import extract_wav_durations_sf
 from core.models.analysis import TrackInfo
+from core.models.settings import IdExtractionSettings, ToleranceSettings
 from pdf_extractor import extract_pdf_tracklist
 
 
@@ -15,11 +16,17 @@ class AnalysisService:
     """Pure-Python orchestrator for the analysis process.
 
     Uses callbacks to report progress, results, and completion, so it can run
-    in any thread context without Qt dependencies.
+    in any thread context without Qt dependencies. Configuration settings
+    are injected via the constructor to keep dependencies explicit.
     """
 
-    def __init__(self) -> None:
-        pass
+    def __init__(
+        self,
+        tolerance_settings: ToleranceSettings,
+        id_extraction_settings: IdExtractionSettings,
+    ) -> None:
+        self._tolerance_settings = tolerance_settings
+        self._id_extraction_settings = id_extraction_settings
 
     def start_analysis(
         self,
@@ -32,7 +39,9 @@ class AnalysisService:
         try:
             # Scanning and pairing
             progress_callback("Scanning and pairing files...")
-            pairs, skipped_count = discover_and_pair_files(pdf_dir, wav_dir)
+            pairs, skipped_count = discover_and_pair_files(
+                pdf_dir, wav_dir, self._id_extraction_settings
+            )
 
             if not pairs:
                 finished_callback("No valid PDF-ZIP pairs found.")
@@ -51,7 +60,12 @@ class AnalysisService:
                     wav_data = extract_wav_durations_sf(pair_info["zip"])
 
                     # Domain comparison
-                    side_results = compare_data(pdf_data, wav_data, pair_info)
+                    side_results = compare_data(
+                        pdf_data,
+                        wav_data,
+                        pair_info,
+                        self._tolerance_settings,
+                    )
 
                     # Emit results
                     for res in side_results:

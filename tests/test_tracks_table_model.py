@@ -6,7 +6,7 @@ import pytest
 from PyQt6.QtCore import Qt
 
 from core.models.analysis import SideResult, TrackInfo, WavInfo
-from ui.config_models import ToleranceSettings
+from core.models.settings import ToleranceSettings
 from ui.constants import SYMBOL_CHECK, SYMBOL_CROSS
 from ui.models.tracks_table_model import TracksTableModel
 

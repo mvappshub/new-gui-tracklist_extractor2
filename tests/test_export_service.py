@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 
 from core.models.analysis import SideResult, TrackInfo, WavInfo
+from core.models.settings import ExportSettings
 from services.export_service import export_results_to_json
-from ui.config_models import ExportSettings
 
 
 @pytest.fixture

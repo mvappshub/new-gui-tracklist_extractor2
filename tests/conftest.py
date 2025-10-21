@@ -13,6 +13,8 @@ from PyQt6.QtCore import QSettings, QTimer
 from PyQt6.QtWidgets import QApplication
 
 import config as config_module
+from core.models.settings import IdExtractionSettings, ToleranceSettings
+from ui.config_models import WaveformSettings
 
 
 @pytest.fixture(scope="session")
@@ -105,3 +107,30 @@ def invalid_wav_zip(tmp_path) -> Generator[Tuple[Path, str], None, None]:
     with zipfile.ZipFile(zip_path, "w") as zf:
         zf.writestr(wav_filename, b"not-a-valid-wav")
     yield zip_path, wav_filename
+
+
+@pytest.fixture
+def tolerance_settings() -> ToleranceSettings:
+    """Provide default tolerance settings for tests."""
+    return ToleranceSettings(warn_tolerance=2, fail_tolerance=5)
+
+
+@pytest.fixture
+def id_extraction_settings() -> IdExtractionSettings:
+    """Provide default numeric ID extraction settings for tests."""
+    return IdExtractionSettings(min_digits=1, max_digits=6, ignore_numbers=[])
+
+
+@pytest.fixture
+def waveform_settings() -> WaveformSettings:
+    """Provide default waveform viewer/editor settings for tests."""
+    return WaveformSettings(
+        overview_points=2000,
+        min_region_duration=0.3,
+        snap_tolerance=0.1,
+        enable_snapping=True,
+        default_volume=0.5,
+        waveform_color="#3B82F6",
+        position_line_color="#EF4444",
+        downsample_factor=10,
+    )

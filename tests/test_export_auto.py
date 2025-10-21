@@ -15,14 +15,14 @@ import json
 import logging
 import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 from datetime import datetime
 
 pytestmark = pytest.mark.qt_no_exception_capture
 
 # Import funkcionality pro testování
 from fluent_gui import _export_results_to_json, SideResult, TrackInfo, WavInfo
-from config import cfg
+from core.models.settings import ExportSettings
 
 
 class TestExportAuto:
@@ -53,9 +53,6 @@ class TestExportAuto:
         # Arrange
         export_dir = tmp_path / "exports"
         mock_results = [self.create_mock_side_result(1), self.create_mock_side_result(2)]
-
-        # Vytvořit reálné ExportSettings místo použití Mock objektů
-        from ui.config_models import ExportSettings
 
         export_settings = ExportSettings(
             auto_export=True,
@@ -111,9 +108,6 @@ class TestExportAuto:
         export_dir = tmp_path / "exports"
         mock_results = [self.create_mock_side_result()]
 
-        # Vytvořit reálné ExportSettings s auto_export=False
-        from ui.config_models import ExportSettings
-
         export_settings = ExportSettings(
             auto_export=False,
             export_dir=export_dir
@@ -134,9 +128,6 @@ class TestExportAuto:
 
         # Zajistit, že adresář neexistuje
         assert not export_dir.exists()
-
-        # Vytvořit reálné ExportSettings
-        from ui.config_models import ExportSettings
 
         export_settings = ExportSettings(
             auto_export=True,
@@ -160,17 +151,16 @@ class TestExportAuto:
         export_dir.mkdir()
         mock_results = [self.create_mock_side_result()]
 
+        export_settings = ExportSettings(auto_export=True, export_dir=export_dir)
+
         # Mock json.dump funkci, aby vyvolala PermissionError při zápisu
-        with patch('json.dump') as mock_json_dump, \
-             patch.object(cfg, 'export_auto', Mock(value=True)), \
-             patch.object(cfg, 'export_default_dir', Mock(value=str(export_dir))), \
-             caplog.at_level(logging.ERROR):
+        with patch('json.dump') as mock_json_dump, caplog.at_level(logging.ERROR):
 
             # Simulovat chybu při zápisu JSON
             mock_json_dump.side_effect = PermissionError("Access denied")
 
             # Act
-            result_path = _export_results_to_json(mock_results)
+            result_path = _export_results_to_json(mock_results, export_settings)
 
             # Assert
             assert result_path is None  # Žádný soubor nebyl vytvořen kvůli chybě
@@ -187,15 +177,14 @@ class TestExportAuto:
         export_dir = tmp_path / "exports"
         empty_results = []
 
-        with patch.object(cfg, 'export_auto', Mock(value=True)), \
-             patch.object(cfg, 'export_default_dir', Mock(value=str(export_dir))):
+        export_settings = ExportSettings(auto_export=True, export_dir=export_dir)
 
-            # Act
-            result_path = _export_results_to_json(empty_results)
+        # Act
+        result_path = _export_results_to_json(empty_results, export_settings)
 
-            # Assert
-            assert result_path is None
-            assert not export_dir.exists()
+        # Assert
+        assert result_path is None
+        assert not export_dir.exists()
 
     def test_export_json_structure_validation(self, tmp_path):
         """Test: Detailní ověření struktury exportovaného JSON."""
@@ -221,17 +210,16 @@ class TestExportAuto:
             )
         ]
 
-        with patch.object(cfg, 'export_auto', Mock(value=True)), \
-             patch.object(cfg, 'export_default_dir', Mock(value=str(export_dir))):
+        export_settings = ExportSettings(auto_export=True, export_dir=export_dir)
 
-            # Act
-            result_path = _export_results_to_json(mock_results)
+        # Act
+        result_path = _export_results_to_json(mock_results, export_settings)
 
-            # Assert
-            assert result_path is not None
+        # Assert
+        assert result_path is not None
 
-            with open(result_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+        with open(result_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
 
             # Ověřit základní strukturu
             assert "exported_at" in data
@@ -274,13 +262,16 @@ class TestExportAuto:
         export_dir = tmp_path / "exports"
         export_dir.mkdir()
 
-        with patch.object(cfg, 'export_auto', Mock(value=True)), \
-             patch.object(cfg, 'export_default_dir', Mock(value=str(export_dir))), \
-             patch('pathlib.Path.open', side_effect=PermissionError("Access denied")), \
+        export_settings = ExportSettings(auto_export=True, export_dir=export_dir)
+
+        with patch('pathlib.Path.open', side_effect=PermissionError("Access denied")), \
              caplog.at_level(logging.ERROR):
 
             # Act
-            result_path = _export_results_to_json([self.create_mock_side_result(1)])
+            result_path = _export_results_to_json(
+                [self.create_mock_side_result(1)],
+                export_settings,
+            )
 
             # Assert
             assert result_path is None

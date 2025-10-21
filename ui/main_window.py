@@ -25,7 +25,8 @@ from PyQt6.QtWidgets import (
 
 from pdf_viewer import PdfViewerDialog
 from services.export_service import export_results_to_json
-from ui.config_models import ExportSettings, ThemeSettings, ToleranceSettings
+from core.models.settings import ExportSettings, ToleranceSettings
+from ui.config_models import ThemeSettings, WaveformSettings
 from ui.constants import *
 from ui.dialogs.settings_dialog import SettingsDialog
 from ui.models.results_table_model import ResultsTableModel
@@ -40,6 +41,7 @@ class MainWindow(QMainWindow):
         tolerance_settings: ToleranceSettings,
         export_settings: ExportSettings,
         theme_settings: ThemeSettings,
+        waveform_settings: WaveformSettings,
         worker_manager: AnalysisWorkerManager,
         settings_filename: Path,
     ):
@@ -47,6 +49,7 @@ class MainWindow(QMainWindow):
         self.tolerance_settings = tolerance_settings
         self.export_settings = export_settings
         self.theme_settings = theme_settings
+        self.waveform_settings = waveform_settings
         self.worker_manager = worker_manager
         self.worker_manager.setParent(self)
         self.settings_filename = Path(settings_filename)
@@ -390,8 +393,17 @@ class MainWindow(QMainWindow):
                 if result.wav_tracks:
                     wav_tracks = result.wav_tracks
 
-            dialog = WaveformEditorDialog(result.zip_path, wav_track.filename, self)
-            dialog.set_pdf_tracks(pdf_tracks, wav_tracks)
+            dialog = WaveformEditorDialog(
+                result.zip_path,
+                wav_track.filename,
+                waveform_settings=self.waveform_settings,
+                parent=self,
+            )
+            dialog.set_pdf_tracks(
+                pdf_tracks,
+                wav_tracks,
+                self.tolerance_settings,
+            )
             dialog.exec()
         except Exception as exc:
             logging.error("Failed to open waveform viewer: %s", exc, exc_info=True)

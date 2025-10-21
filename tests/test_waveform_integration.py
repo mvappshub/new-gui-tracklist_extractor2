@@ -62,16 +62,20 @@ class TestWaveformIntegration:
         main_window.bottom_model.update_data(result)
 
         index = main_window.bottom_model.index(0, 7)
-        with mock.patch("waveform_viewer.WaveformViewerDialog", autospec=True) as dialog_cls:
+        with mock.patch("waveform_viewer.WaveformEditorDialog", autospec=True) as dialog_cls:
             dialog_instance = dialog_cls.return_value
             main_window.on_bottom_cell_clicked(index)
-            dialog_cls.assert_called_once_with(zip_path, wav_name, main_window)
+            dialog_cls.assert_called_once()
+            args, kwargs = dialog_cls.call_args
+            assert args[:2] == (zip_path, wav_name)
+            assert kwargs["waveform_settings"] == main_window.waveform_settings
+            assert kwargs["parent"] is main_window
             dialog_instance.exec.assert_called_once()
 
     def test_waveform_click_no_selection(self, main_window, mock_wav_zip, qtbot):
         zip_path, wav_name = mock_wav_zip
         index = main_window.bottom_model.index(0, 7)
-        with mock.patch("waveform_viewer.WaveformViewerDialog") as dialog_cls:
+        with mock.patch("waveform_viewer.WaveformEditorDialog") as dialog_cls:
             main_window.on_bottom_cell_clicked(index)
             dialog_cls.assert_not_called()
 

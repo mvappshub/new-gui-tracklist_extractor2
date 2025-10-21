@@ -5,18 +5,14 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from config import AppConfig
+from core.models.settings import (
+    ExportSettings,
+    IdExtractionSettings,
+    ToleranceSettings,
+)
 
-
-@dataclass
-class ToleranceSettings:
-    warn_tolerance: int
-    fail_tolerance: int
-
-
-@dataclass
-class ExportSettings:
-    auto_export: bool
-    export_dir: Path
+# NOTE: Only application entry points should import the global cfg object.
+# Other layers construct settings via these dataclasses and receive them via DI.
 
 
 @dataclass
@@ -43,6 +39,19 @@ class WorkerSettings:
     wav_dir: Path
 
 
+@dataclass
+class WaveformSettings:
+    """Settings controlling waveform viewer/editor behavior."""
+
+    overview_points: int
+    min_region_duration: float
+    snap_tolerance: float
+    enable_snapping: bool
+    default_volume: float
+    waveform_color: str
+    position_line_color: str
+    downsample_factor: int
+
 def load_tolerance_settings(cfg: AppConfig) -> ToleranceSettings:
     return ToleranceSettings(
         warn_tolerance=cfg.analysis_tolerance_warn.value,
@@ -61,6 +70,46 @@ def load_path_settings(cfg: AppConfig) -> PathSettings:
     return PathSettings(
         pdf_dir=Path(cfg.input_pdf_dir.value),
         wav_dir=Path(cfg.input_wav_dir.value),
+    )
+
+
+def load_id_extraction_settings(cfg: AppConfig) -> IdExtractionSettings:
+    """Load numeric ID extraction settings from application configuration."""
+
+    def _safe_int(value: Any, default: int) -> int:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return default
+
+    min_digits = _safe_int(cfg.analysis_min_id_digits.value, default=1)
+    max_digits = _safe_int(cfg.analysis_max_id_digits.value, default=min_digits)
+    # Normalize so downstream code can assume min_digits <= max_digits.
+    if min_digits > max_digits:
+        min_digits, max_digits = max_digits, min_digits
+
+    raw_ignore = cfg.analysis_ignore_numbers.value or []
+    ignore_numbers: list[str] = []
+    seen: set[str] = set()
+    for item in raw_ignore:
+        if item is None:
+            continue
+        candidate = str(item).strip()
+        if not candidate:
+            continue
+        if candidate not in seen:
+            ignore_numbers.append(candidate)
+            seen.add(candidate)
+        if candidate.isdigit():
+            normalized = str(int(candidate))
+            if normalized not in seen:
+                ignore_numbers.append(normalized)
+                seen.add(normalized)
+
+    return IdExtractionSettings(
+        min_digits=min_digits,
+        max_digits=max_digits,
+        ignore_numbers=ignore_numbers,
     )
 
 
@@ -97,4 +146,62 @@ def load_worker_settings(cfg: AppConfig) -> WorkerSettings:
     return WorkerSettings(
         pdf_dir=Path(cfg.input_pdf_dir.value),
         wav_dir=Path(cfg.input_wav_dir.value),
+    )
+
+
+def load_waveform_settings(cfg: AppConfig) -> WaveformSettings:
+    """Load waveform viewer/editor settings from application configuration."""
+
+    def _get_with_default(key: str, default: Any) -> Any:
+        try:
+            return cfg.get(key, default)
+        except Exception:
+            return default
+
+    def _to_int(value: Any, default: int) -> int:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return default
+
+    def _to_float(value: Any, default: float) -> float:
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return default
+
+    overview_points = _to_int(
+        _get_with_default("waveform_editor/overview_points", 2000),
+        default=2000,
+    )
+    min_region_duration = _to_float(
+        _get_with_default("waveform_editor/min_region_duration", 0.3),
+        default=0.3,
+    )
+    snap_tolerance = _to_float(
+        _get_with_default("waveform_editor/snap_tolerance", 0.1),
+        default=0.1,
+    )
+    enable_snapping = bool(_get_with_default("waveform_editor/enable_snapping", True))
+    default_volume = _to_float(getattr(cfg.waveform_default_volume, "value", 0.5), 0.5)
+    waveform_color = str(
+        _get_with_default("waveform/waveform_color", "#3B82F6") or "#3B82F6"
+    )
+    position_line_color = str(
+        _get_with_default("waveform/position_line_color", "#EF4444") or "#EF4444"
+    )
+    downsample_factor = _to_int(
+        getattr(cfg.waveform_downsample_factor, "value", 10),
+        default=10,
+    )
+
+    return WaveformSettings(
+        overview_points=max(1, overview_points),
+        min_region_duration=max(0.0, min_region_duration),
+        snap_tolerance=max(0.0, snap_tolerance),
+        enable_snapping=enable_snapping,
+        default_volume=max(0.0, min(1.0, default_volume)),
+        waveform_color=waveform_color,
+        position_line_color=position_line_color,
+        downsample_factor=max(1, downsample_factor),
     )

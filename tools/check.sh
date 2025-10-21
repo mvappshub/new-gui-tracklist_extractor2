@@ -30,7 +30,7 @@ echo "Running mypy in strict mode..."
 
 if command -v openspec >/dev/null 2>&1; then
   echo "Validating OpenSpec specifications..."
-  openspec validate refactor-phase1-stabilization --strict
+  openspec validate refactor-phase2-dependency-injection --strict
 else
   echo "Skipping OpenSpec validation (openspec CLI not found)..."
 fi

@@ -35,7 +35,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
-from config import cfg
+from core.models.settings import ToleranceSettings
+from ui.config_models import WaveformSettings
 
 # Waveform display configuration defaults
 DEFAULT_OVERVIEW_POINTS = 2000  # Maximum points for waveform envelope
@@ -43,16 +44,6 @@ MIN_REGION_DURATION = 0.3        # Minimum region duration in seconds
 DEFAULT_SNAP_TOLERANCE = 0.1     # Default snap tolerance in seconds
 RMS_WINDOW_SIZE = 0.1            # RMS calculation window in seconds
 INITIAL_DETAIL_DURATION = 10.0   # Initial detail view duration in seconds
-
-
-def _get_waveform_editor_setting(key: str, default):
-    """Fetch waveform editor configuration values with safe fallback."""
-    try:
-        value = cfg.get(f"waveform_editor/{key}", default)
-        # Ensure type consistency with default
-        return type(default)(value)
-    except Exception:
-        return default
 
 
 class TimeAxisItem(pg.AxisItem):
@@ -74,7 +65,13 @@ class TimeAxisItem(pg.AxisItem):
 class WaveformEditorDialog(QDialog):
     """Advanced waveform editor with a single interactive waveform view for precise audio analysis."""
 
-    def __init__(self, zip_path: Path, wav_filename: str, parent=None):
+    def __init__(
+        self,
+        zip_path: Path,
+        wav_filename: str,
+        waveform_settings: WaveformSettings,
+        parent=None,
+    ):
         super().__init__(parent)
         self._zip_path = Path(zip_path)
         self._wav_filename = wav_filename
@@ -101,15 +98,11 @@ class WaveformEditorDialog(QDialog):
         self._slider_updating = False
 
         # Waveform editor configuration
-        self._overview_points = _get_waveform_editor_setting(
-            "overview_points", DEFAULT_OVERVIEW_POINTS
-        )
-        self._min_region_duration = _get_waveform_editor_setting(
-            "min_region_duration", MIN_REGION_DURATION
-        )
-        self._snap_tolerance = _get_waveform_editor_setting(
-            "snap_tolerance", DEFAULT_SNAP_TOLERANCE
-        )
+        self._waveform_settings = waveform_settings
+        self._overview_points = max(1, waveform_settings.overview_points)
+        self._min_region_duration = max(0.0, waveform_settings.min_region_duration)
+        self._snap_tolerance = max(0.0, waveform_settings.snap_tolerance)
+        self._snapping_enabled = waveform_settings.enable_snapping
 
         self.setWindowTitle(f"Waveform Editor - {wav_filename}")
         self.resize(1200, 800)
@@ -127,10 +120,7 @@ class WaveformEditorDialog(QDialog):
         self._audio_output = QAudioOutput(self)
         self._player.setAudioOutput(self._audio_output)
 
-        try:
-            volume_value = float(cfg.waveform_default_volume.value)
-        except Exception:
-            volume_value = 0.5
+        volume_value = max(0.0, min(1.0, float(waveform_settings.default_volume)))
         self._audio_output.setVolume(max(0.0, min(1.0, volume_value)))
 
         self._init_ui()
@@ -425,10 +415,8 @@ class WaveformEditorDialog(QDialog):
 
         min_val, max_val = self._region_item.getRegion()
 
-        # Check if snapping is enabled in config
-        snapping_enabled = cfg.get("waveform_editor/enable_snapping", True)
-
-        if snapping_enabled:
+        # Check if snapping is enabled in settings
+        if self._snapping_enabled:
             # Apply snap to audio features (RMS peaks and zero crossings)
             snapped_min, snapped_max = self._snap_region_to_audio(min_val, max_val)
         else:
@@ -586,7 +574,12 @@ class WaveformEditorDialog(QDialog):
         """Format time delta in seconds with sign."""
         return f"{float(delta_seconds):+0.1f} s"
 
-    def set_pdf_tracks(self, pdf_tracks: List[Dict], wav_tracks: List[Dict]) -> None:
+    def set_pdf_tracks(
+        self,
+        pdf_tracks: List[Dict],
+        wav_tracks: List[Dict],
+        tolerance_settings: ToleranceSettings,
+    ) -> None:
         """Set PDF track markers with tolerance-based coloring."""
         self._pdf_tracks = pdf_tracks
 
@@ -596,13 +589,8 @@ class WaveformEditorDialog(QDialog):
         if not pdf_tracks or not self.plot_widget:
             return
 
-        # Get tolerance values from config
-        try:
-            tolerance_warn = float(cfg.analysis_tolerance_warn.value)
-            tolerance_fail = float(cfg.analysis_tolerance_fail.value)
-        except Exception:
-            tolerance_warn = 2.0
-            tolerance_fail = 5.0
+        tolerance_warn = float(tolerance_settings.warn_tolerance)
+        tolerance_fail = float(tolerance_settings.fail_tolerance)
 
         # Collect PDF durations and labels
         pdf_durations: List[float] = []
@@ -831,13 +819,20 @@ class WaveformEditorDialog(QDialog):
 class WaveformViewerDialog(QDialog):
     """Modal dialog showing waveform visualization with playback controls."""
 
-    def __init__(self, zip_path: Path, wav_filename: str, parent=None):
+    def __init__(
+        self,
+        zip_path: Path,
+        wav_filename: str,
+        waveform_settings: WaveformSettings,
+        parent=None,
+    ):
         super().__init__(parent)
         self._zip_path = Path(zip_path)
         self._wav_filename = wav_filename
         self._temp_wav: Optional[Path] = None
         self._duration_ms: int = 0
         self._slider_updating = False
+        self._waveform_settings = waveform_settings
 
         self.setWindowTitle(f"Waveform Viewer - {wav_filename}")
         self.resize(900, 600)
@@ -855,10 +850,7 @@ class WaveformViewerDialog(QDialog):
         self._audio_output = QAudioOutput(self)
         self._player.setAudioOutput(self._audio_output)
 
-        try:
-            volume_value = float(cfg.waveform_default_volume.value)
-        except Exception:
-            volume_value = 0.5
+        volume_value = max(0.0, min(1.0, float(waveform_settings.default_volume)))
         self._audio_output.setVolume(max(0.0, min(1.0, volume_value)))
 
         self._init_ui()
@@ -881,8 +873,8 @@ class WaveformViewerDialog(QDialog):
         self.plot_widget.setLabel("left", "Amplitude")
         main_layout.addWidget(self.plot_widget, stretch=1)
 
-        waveform_pen_color = cfg.get("waveform/waveform_color", "#3B82F6") or "#3B82F6"
-        position_pen_color = cfg.get("waveform/position_line_color", "#EF4444") or "#EF4444"
+        waveform_pen_color = waveform_settings.waveform_color or "#3B82F6"
+        position_pen_color = waveform_settings.position_line_color or "#EF4444"
 
         self._plot_curve = self.plot_widget.plot(
             pen=pg.mkPen(waveform_pen_color, width=1)
@@ -1036,11 +1028,8 @@ class WaveformViewerDialog(QDialog):
                     self._temp_wav = Path(temp_file.name)
 
     def _get_downsample_factor(self) -> int:
-        """Retrieve downsample factor from configuration."""
-        try:
-            value = int(cfg.waveform_downsample_factor.value)
-        except Exception:
-            value = 10
+        """Retrieve downsample factor from injected settings."""
+        value = int(self._waveform_settings.downsample_factor)
         return max(1, min(100, value))
 
     def _set_controls_enabled(self, enabled: bool) -> None:

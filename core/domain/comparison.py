@@ -4,8 +4,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import cast
 
-from config import cfg
 from core.models.analysis import SideResult, TrackInfo, WavInfo
+from core.models.settings import ToleranceSettings
 from wav_extractor_wave import detect_audio_mode_with_ai, normalize_positions
 
 DetectFn = Callable[[list[WavInfo]], dict[str, list[WavInfo]]]
@@ -36,13 +36,15 @@ def compare_data(
     pdf_data: dict[str, list[TrackInfo]],
     wav_data: list[WavInfo],
     pair_info: dict[str, Path],
+    tolerance_settings: ToleranceSettings,
 ) -> list[SideResult]:
+    """Compare PDF and WAV track data using injected tolerance thresholds."""
     results: list[SideResult] = []
     modes, wavs_by_side = detect_audio_mode(wav_data)
     all_sides = set(pdf_data.keys()) | set(wavs_by_side.keys())
 
-    tolerance_warn = cfg.analysis_tolerance_warn.value
-    tolerance_fail = cfg.analysis_tolerance_fail.value
+    tolerance_warn = tolerance_settings.warn_tolerance
+    tolerance_fail = tolerance_settings.fail_tolerance
 
     for side in sorted(all_sides):
         pdf_tracks = pdf_data.get(side, [])

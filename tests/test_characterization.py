@@ -9,6 +9,7 @@ import pytest
 from adapters.filesystem.file_discovery import discover_and_pair_files
 from core.domain.comparison import compare_data
 from core.models.analysis import TrackInfo, WavInfo
+from core.models.settings import IdExtractionSettings, ToleranceSettings
 
 FLOAT_TOLERANCE = 0.01
 GOLDEN_DIR = Path(__file__).parent / "data" / "golden"
@@ -47,13 +48,10 @@ def _assert_json_matches(actual: Any, expected: Any, path: str = "root") -> None
 
 
 @pytest.mark.usefixtures("isolated_config")
-def test_discover_and_pair_files_matches_golden(tmp_path) -> None:
-    from config import cfg
-
-    cfg.analysis_min_id_digits = 1
-    cfg.analysis_max_id_digits = 6
-    cfg.analysis_ignore_numbers = []
-
+def test_discover_and_pair_files_matches_golden(
+    tmp_path,
+    id_extraction_settings,
+) -> None:
     pdf_dir = tmp_path / "pdf"
     wav_dir = tmp_path / "zip"
     pdf_dir.mkdir()
@@ -66,7 +64,7 @@ def test_discover_and_pair_files_matches_golden(tmp_path) -> None:
     (wav_dir / "67890_take1.zip").write_text("zip", encoding="utf-8")
     (wav_dir / "67890_take2.zip").write_text("zip", encoding="utf-8")
 
-    pairs, skipped = discover_and_pair_files(pdf_dir, wav_dir)
+    pairs, skipped = discover_and_pair_files(pdf_dir, wav_dir, id_extraction_settings)
     actual = {
         "pairs": {
             pair_id: {"pdf": paths["pdf"].name, "zip": paths["zip"].name}
@@ -80,12 +78,7 @@ def test_discover_and_pair_files_matches_golden(tmp_path) -> None:
 
 
 @pytest.mark.usefixtures("isolated_config")
-def test_compare_data_matches_golden(tmp_path) -> None:
-    from config import cfg
-
-    cfg.analysis_tolerance_warn = 2
-    cfg.analysis_tolerance_fail = 5
-
+def test_compare_data_matches_golden(tmp_path, tolerance_settings) -> None:
     pdf_data = {
         "A": [
             TrackInfo(title="Intro", side="A", position=1, duration_sec=120),
@@ -104,7 +97,7 @@ def test_compare_data_matches_golden(tmp_path) -> None:
 
     pair_info = {"pdf": tmp_path / "dummy.pdf", "zip": tmp_path / "dummy.zip"}
 
-    results = compare_data(pdf_data, wav_data, pair_info)
+    results = compare_data(pdf_data, wav_data, pair_info, tolerance_settings)
     actual_results = []
 
     for item in results:
@@ -115,3 +108,78 @@ def test_compare_data_matches_golden(tmp_path) -> None:
 
     expected = _load_golden("golden_comparison.json")
     _assert_json_matches(actual_results, expected)
+
+
+@pytest.mark.parametrize(
+    ("warn_tolerance", "fail_tolerance", "expected_status"),
+    [
+        (1, 2, "FAIL"),
+        (2, 5, "WARN"),
+        (4, 6, "OK"),
+    ],
+)
+def test_compare_data_respects_injected_tolerances(
+    tmp_path: Path,
+    warn_tolerance: int,
+    fail_tolerance: int,
+    expected_status: str,
+) -> None:
+    pdf_data = {
+        "A": [
+            TrackInfo(title="Intro", side="A", position=1, duration_sec=120),
+            TrackInfo(title="Song", side="A", position=2, duration_sec=150),
+        ],
+        "B": [
+            TrackInfo(title="Ballad", side="B", position=1, duration_sec=210),
+        ],
+    }
+    wav_data = [
+        WavInfo(filename="Side_A_01_intro.wav", duration_sec=119.98),
+        WavInfo(filename="Side_A_02_song.wav", duration_sec=150.02),
+        WavInfo(filename="Side_B_01_ballad.wav", duration_sec=206.9),
+    ]
+    pair_info = {"pdf": tmp_path / "dummy.pdf", "zip": tmp_path / "dummy.zip"}
+
+    tolerance = ToleranceSettings(
+        warn_tolerance=warn_tolerance,
+        fail_tolerance=fail_tolerance,
+    )
+    results = compare_data(pdf_data, wav_data, pair_info, tolerance)
+    status_by_side = {result.side: result.status for result in results}
+    assert status_by_side["B"] == expected_status
+
+
+@pytest.mark.parametrize(
+    ("min_digits", "max_digits", "ignore_numbers", "expected_ids"),
+    [
+        (1, 3, [], {"9", "1"}),
+        (2, 3, [], {"1"}),
+        (1, 3, ["9"], {"1"}),
+    ],
+)
+def test_discover_and_pair_files_respects_id_settings(
+    tmp_path: Path,
+    min_digits: int,
+    max_digits: int,
+    ignore_numbers: list[str],
+    expected_ids: set[str],
+):
+    pdf_dir = tmp_path / "pdf_param"
+    wav_dir = tmp_path / "zip_param"
+    pdf_dir.mkdir()
+    wav_dir.mkdir()
+
+    (pdf_dir / "track9.pdf").write_text("pdf", encoding="utf-8")
+    (pdf_dir / "track_001.pdf").write_text("pdf", encoding="utf-8")
+    (wav_dir / "track9.zip").write_text("zip", encoding="utf-8")
+    (wav_dir / "track_001.zip").write_text("zip", encoding="utf-8")
+
+    settings = IdExtractionSettings(
+        min_digits=min_digits,
+        max_digits=max_digits,
+        ignore_numbers=ignore_numbers,
+    )
+    pairs, skipped = discover_and_pair_files(pdf_dir, wav_dir, settings)
+
+    assert set(pairs.keys()) == expected_ids
+    assert skipped == 0

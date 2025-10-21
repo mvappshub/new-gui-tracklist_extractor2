@@ -16,13 +16,6 @@ from waveform_viewer import WaveformViewerDialog
 
 
 @pytest.fixture(autouse=True)
-def _ensure_test_config(isolated_config, monkeypatch):
-    """Ensure waveform_viewer uses the isolated configuration."""
-    monkeypatch.setattr(waveform_viewer, "cfg", isolated_config, raising=False)
-    return isolated_config
-
-
-@pytest.fixture(autouse=True)
 def fake_multimedia(monkeypatch):
     class DummySignal:
         def __init__(self):
@@ -77,9 +70,9 @@ def fake_multimedia(monkeypatch):
 
 
 @pytest.fixture
-def viewer_dialog(qapp, mock_wav_zip, qtbot) -> WaveformViewerDialog:
+def viewer_dialog(qapp, mock_wav_zip, qtbot, waveform_settings) -> WaveformViewerDialog:
     zip_path, wav_name = mock_wav_zip
-    dialog = WaveformViewerDialog(zip_path, wav_name)
+    dialog = WaveformViewerDialog(zip_path, wav_name, waveform_settings)
     qtbot.addWidget(dialog)
     try:
         yield dialog
@@ -96,13 +89,13 @@ class TestWaveformViewerDialog:
         assert viewer_dialog.width() == 900
         assert viewer_dialog.height() == 600
 
-    def test_multimedia_unavailable(self, monkeypatch, mock_wav_zip):
+    def test_multimedia_unavailable(self, monkeypatch, mock_wav_zip, waveform_settings):
         zip_path, wav_name = mock_wav_zip
         monkeypatch.setattr(waveform_viewer, "_MULTIMEDIA_AVAILABLE", False)
         monkeypatch.setattr(waveform_viewer, "_MULTIMEDIA_IMPORT_ERROR", ImportError("missing Qt multimedia"))
         with mock.patch.object(QMessageBox, "critical") as critical:
             with pytest.raises(RuntimeError):
-                WaveformViewerDialog(zip_path, wav_name)
+                WaveformViewerDialog(zip_path, wav_name, waveform_settings)
         critical.assert_called_once()
         monkeypatch.setattr(waveform_viewer, "_MULTIMEDIA_AVAILABLE", True)
 
@@ -121,15 +114,15 @@ class TestWaveformViewerDialog:
         assert plot_item.getAxis("left").labelText == "Amplitude"
         assert plot_item.getAxis("bottom").labelText == "Time"
 
-    def test_waveform_extraction(self, mock_wav_zip, qtbot):
+    def test_waveform_extraction(self, mock_wav_zip, qtbot, waveform_settings):
         zip_path, wav_name = mock_wav_zip
-        dialog = WaveformViewerDialog(zip_path, wav_name)
+        dialog = WaveformViewerDialog(zip_path, wav_name, waveform_settings)
         qtbot.addWidget(dialog)
         assert dialog._temp_wav is not None
         assert dialog._temp_wav.exists()
         assert dialog._temp_wav.suffix == ".wav"
 
-    def test_waveform_loading_success(self, monkeypatch, tmp_path, qtbot):
+    def test_waveform_loading_success(self, monkeypatch, tmp_path, qtbot, waveform_settings):
         fake_wav = tmp_path / "fake.wav"
         fake_wav.write_bytes(b"RIFF\x00\x00\x00\x00WAVEfmt ")
 
@@ -142,13 +135,17 @@ class TestWaveformViewerDialog:
         ) as set_data:
             mock_sf.read.return_value = (mono, 100)
             monkeypatch.setattr(WaveformViewerDialog, "_extract_wav", fake_extract, raising=False)
-            dialog = WaveformViewerDialog(tmp_path / "dummy.zip", "test.wav")
+            dialog = WaveformViewerDialog(
+                tmp_path / "dummy.zip",
+                "test.wav",
+                waveform_settings,
+            )
             qtbot.addWidget(dialog)
             assert dialog._duration_ms > 0
             assert dialog.time_total.text().startswith("00:")
             assert set_data.called
 
-    def test_waveform_loading_stereo_to_mono(self, monkeypatch, tmp_path, qtbot):
+    def test_waveform_loading_stereo_to_mono(self, monkeypatch, tmp_path, qtbot, waveform_settings):
         fake = tmp_path / "fake.wav"
         fake.write_bytes(b"RIFF\x00\x00\x00\x00WAVEfmt ")
 
@@ -161,14 +158,16 @@ class TestWaveformViewerDialog:
         with mock.patch.object(waveform_viewer, "sf") as mock_sf:
             mock_sf.read.return_value = (stereo, 100)
             monkeypatch.setattr(WaveformViewerDialog, "_extract_wav", fake_extract, raising=False)
-            dialog = WaveformViewerDialog(tmp_path / "dummy.zip", "test.wav")
+            dialog = WaveformViewerDialog(
+                tmp_path / "dummy.zip",
+                "test.wav",
+                waveform_settings,
+            )
             qtbot.addWidget(dialog)
             assert dialog._duration_ms > 0
 
-    def test_waveform_downsampling(self, monkeypatch, tmp_path, qtbot, isolated_config):
-        isolated_config.waveform_downsample_factor = 20
-        monkeypatch.setattr(waveform_viewer, "cfg", isolated_config, raising=False)
-
+    def test_waveform_downsampling(self, monkeypatch, tmp_path, qtbot, waveform_settings):
+        waveform_settings.downsample_factor = 20
         fake = tmp_path / "fake.wav"
         fake.write_bytes(b"RIFF\x00\x00\x00\x00WAVEfmt ")
 
@@ -181,7 +180,11 @@ class TestWaveformViewerDialog:
         ) as set_data:
             mock_sf.read.return_value = (mono, 400)
             monkeypatch.setattr(WaveformViewerDialog, "_extract_wav", fake_extract, raising=False)
-            WaveformViewerDialog(tmp_path / "dummy.zip", "test.wav")
+            WaveformViewerDialog(
+                tmp_path / "dummy.zip",
+                "test.wav",
+                waveform_settings,
+            )
             # We cannot easily inspect internals but ensure plotting called with compressed data
             args, _ = set_data.call_args
             x_values = args[1]
@@ -236,51 +239,48 @@ class TestWaveformViewerDialog:
         """Test time formatting with milliseconds input (Qt QMediaPlayer API)."""
         assert WaveformViewerDialog._format_time(millis) == expected
 
-    def test_default_volume_from_config(self, isolated_config, mock_wav_zip, qtbot, monkeypatch):
-        isolated_config.waveform_default_volume = 0.7
-        monkeypatch.setattr(waveform_viewer, "cfg", isolated_config, raising=False)
+    def test_default_volume_from_config(self, mock_wav_zip, qtbot, waveform_settings):
+        waveform_settings.default_volume = 0.7
         zip_path, wav_name = mock_wav_zip
-        dialog = WaveformViewerDialog(zip_path, wav_name)
+        dialog = WaveformViewerDialog(zip_path, wav_name, waveform_settings)
         qtbot.addWidget(dialog)
         assert dialog._audio_output.volume() == pytest.approx(0.7)
 
-    def test_downsample_factor_from_config(self, isolated_config, mock_wav_zip, qtbot, monkeypatch):
-        isolated_config.waveform_downsample_factor = 15
-        monkeypatch.setattr(waveform_viewer, "cfg", isolated_config, raising=False)
+    def test_downsample_factor_from_config(self, mock_wav_zip, qtbot, waveform_settings):
+        waveform_settings.downsample_factor = 15
         zip_path, wav_name = mock_wav_zip
-        dialog = WaveformViewerDialog(zip_path, wav_name)
+        dialog = WaveformViewerDialog(zip_path, wav_name, waveform_settings)
         qtbot.addWidget(dialog)
         assert dialog._get_downsample_factor() == 15
 
-    def test_waveform_colors_from_config(self, isolated_config, mock_wav_zip, qtbot, monkeypatch):
-        isolated_config.waveform_waveform_color = "#ffffff"
-        isolated_config.waveform_position_line_color = "#123456"
-        monkeypatch.setattr(waveform_viewer, "cfg", isolated_config, raising=False)
+    def test_waveform_colors_from_config(self, mock_wav_zip, qtbot, waveform_settings):
+        waveform_settings.waveform_color = "#ffffff"
+        waveform_settings.position_line_color = "#123456"
         zip_path, wav_name = mock_wav_zip
-        dialog = WaveformViewerDialog(zip_path, wav_name)
+        dialog = WaveformViewerDialog(zip_path, wav_name, waveform_settings)
         qtbot.addWidget(dialog)
         curve_color = dialog._plot_curve.opts["pen"].color().name()
         line_color = dialog._position_line.pen().color().name()
         assert curve_color.lower() == "#ffffff"
         assert line_color.lower() == "#123456"
 
-    def test_missing_zip_file(self, tmp_path, qtbot):
+    def test_missing_zip_file(self, tmp_path, qtbot, waveform_settings):
         non_existent = tmp_path / "missing.zip"
         with mock.patch.object(QMessageBox, "critical") as critical:
-            dialog = WaveformViewerDialog(non_existent, "track.wav")
+            dialog = WaveformViewerDialog(non_existent, "track.wav", waveform_settings)
         critical.assert_called()
         assert not dialog.play_button.isEnabled()
 
-    def test_missing_wav_in_zip(self, empty_zip, qtbot):
+    def test_missing_wav_in_zip(self, empty_zip, qtbot, waveform_settings):
         with mock.patch.object(QMessageBox, "critical") as critical:
-            dialog = WaveformViewerDialog(empty_zip, "missing.wav")
+            dialog = WaveformViewerDialog(empty_zip, "missing.wav", waveform_settings)
         critical.assert_called()
         assert not dialog.play_button.isEnabled()
 
-    def test_invalid_wav_data(self, invalid_wav_zip, qtbot):
+    def test_invalid_wav_data(self, invalid_wav_zip, qtbot, waveform_settings):
         zip_path, wav_name = invalid_wav_zip
         with mock.patch.object(QMessageBox, "critical") as critical:
-            dialog = WaveformViewerDialog(zip_path, wav_name)
+            dialog = WaveformViewerDialog(zip_path, wav_name, waveform_settings)
         critical.assert_called()
         assert not dialog.play_button.isEnabled()
 

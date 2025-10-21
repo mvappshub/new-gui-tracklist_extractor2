@@ -1,3 +1,5 @@
+from core.models.settings import ExportSettings, IdExtractionSettings, ToleranceSettings
+
 from .constants import *
 from .theme import get_system_file_icon, get_gz_color, load_gz_media_fonts, load_gz_media_stylesheet
 from .models.results_table_model import ResultsTableModel
@@ -7,16 +9,17 @@ from .workers.worker_manager import AnalysisWorkerManager
 from .dialogs.settings_dialog import SettingsDialog
 from .main_window import MainWindow
 from .config_models import (
-    ToleranceSettings,
-    ExportSettings,
     PathSettings,
     ThemeSettings,
     WorkerSettings,
+    WaveformSettings,
     load_tolerance_settings,
     load_export_settings,
     load_path_settings,
     load_theme_settings,
     load_worker_settings,
+    load_id_extraction_settings,
+    load_waveform_settings,
 )
 
 __all__ = [
@@ -78,9 +81,13 @@ __all__ = [
     "PathSettings",
     "ThemeSettings",
     "WorkerSettings",
+    "IdExtractionSettings",
+    "WaveformSettings",
     "load_tolerance_settings",
     "load_export_settings",
     "load_path_settings",
     "load_theme_settings",
     "load_worker_settings",
+    "load_id_extraction_settings",
+    "load_waveform_settings",
 ]
