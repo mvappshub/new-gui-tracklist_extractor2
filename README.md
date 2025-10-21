@@ -31,7 +31,7 @@ Run
     - `PDF input directory`: folder with tracklist PDFs
     - `WAV input directory`: folder with ZIPs containing mastered WAVs
     - `Export directory`: where reports/exports are written
-  - After each analysis run, results auto-export to JSON in `export.default_dir` when `export.auto` is true (filename `analysis_YYYYMMDD_HHMMSS.json`).
+  - After each analysis run, results auto-export to JSON in `export.default_dir` when `export.auto` is true (filename `analysis_YYYYMMDD_HHMMSS.json`). Use the centralized `services.export_service.export_results_to_json()` helper for all exports.
 - WAV batch utility (optional): `python wav_extractor_wave.py "C:\path\to\masters"`
 - Headless/CI runs set `QT_QPA_PLATFORM=offscreen` automatically. To supply fonts in that mode, place `.ttf` files (e.g. DejaVuSans) into the repository `fonts/` directory and they will be loaded on startup.
 
@@ -64,6 +64,6 @@ This project follows a clean, layered architecture to separate concerns and impr
   - `ui/dialogs/`: Contains UI dialogs like `SettingsDialog`.
   - `ui/constants.py` & `ui/theme.py`: Centralized UI constants and styling helpers.
 - **Dependency Injection (DI)**: The UI layer strictly uses constructor injection. Components receive their dependencies (like configuration models or services) upon creation, making them highly testable and decoupled from global state.
-- **`services/`**: Contains application services, such as `AnalysisService` (orchestrates analysis) and `export_service.py` (handles JSON exports). These services are pure Python and Qt-agnostic.
+- **`services/`**: Contains application services, such as `AnalysisService` (orchestrates analysis) and `export_service.py` (handles JSON exports and is the single source of truth for exports). These services are pure Python and Qt-agnostic.
 - **`core/`**: Contains the core domain logic and models of the application (`comparison.py`, `extraction.py`, `models/analysis.py`). This layer is completely independent of any UI or framework.
 - **`fluent_gui.py`**: Now serves as a backward-compatibility wrapper to ensure old entry points and imports continue to work. New development should use `app.py` and the `ui/` package directly.

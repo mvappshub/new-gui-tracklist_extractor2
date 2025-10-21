@@ -4,6 +4,7 @@
 # This file is a backward-compatibility wrapper.
 # New development should use the modular components from the `ui/` package
 # and the new entry point `app.py`.
+# Export helpers moved to services/export_service.py.
 
 from PyQt6.QtWidgets import QApplication, QDialogButtonBox
 
