@@ -1,0 +1,33 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from config import cfg
+
+def test_config():
+    """Test configuration system functionality."""
+    print("Testing configuration system...")
+
+    try:
+        # Test basic config access
+        print(f"LLM Model: {cfg.llm_model}")
+        print(f"PDF Dir: {cfg.input_pdf_dir}")
+        print(f"WAV Dir: {cfg.input_wav_dir}")
+        print(f"Export Dir: {cfg.export_default_dir}")
+        print(f"UI Theme: {cfg.ui_theme}")
+        print(f"UI Font Size: {cfg.ui_base_font_size}")
+        print(f"Analysis Tolerance: {cfg.analysis_tolerance_warn}")
+
+        print("Configuration system works correctly!")
+        return True
+
+    except Exception as e:
+        print(f"Configuration error: {e}")
+        return False
+
+if __name__ == "__main__":
+    success = test_config()
+    sys.exit(0 if success else 1)
