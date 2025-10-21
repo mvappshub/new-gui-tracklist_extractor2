@@ -76,7 +76,6 @@ __all__ = [
     "get_gz_color",
     "load_gz_media_fonts",
     "load_gz_media_stylesheet",
-    "_export_results_to_json",
     "SideResult",
     "TrackInfo",
     "WavInfo",
@@ -139,11 +138,7 @@ def load_gz_media_stylesheet(app):
     _ui_load_stylesheet(app, stylesheet_path=theme_settings.stylesheet_path)
 
 
-def _export_results_to_json(results, export_settings=None):
-    if export_settings is None:
-        export_settings = load_export_settings(cfg)
-    from services.export_service import export_results_to_json as _impl
-    return _impl(results, export_settings)
+# Export functionality moved to services/export_service.py (Phase 4 refactoring)
 
 
 class SettingsDialog(UISettingsDialog):
