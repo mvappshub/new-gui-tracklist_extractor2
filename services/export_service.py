@@ -8,6 +8,9 @@ from typing import Any, Optional, Protocol
 
 from core.models.analysis import SideResult
 
+"""Centralized export service - single source of truth for all analysis result exports.
+All export operations should use export_results_to_json() from this module."""
+
 
 class ExportSettingsProtocol(Protocol):
     auto_export: bool
@@ -18,6 +21,15 @@ ExportSettingsType = ExportSettingsProtocol
 
 
 def export_results_to_json(results: list[SideResult], export_settings: ExportSettingsType) -> Optional[Path]:
+    """Export analysis results to JSON using the centralized export service.
+
+    Usage example:
+        from services.export_service import export_results_to_json
+        exported_path = export_results_to_json(results, export_settings)
+
+    This is the canonical export implementation shared by the UI layer and automated tests.
+    Returns the exported file path or ``None`` when nothing is written.
+    """
     if not export_settings.auto_export or not results:
         return None
 
