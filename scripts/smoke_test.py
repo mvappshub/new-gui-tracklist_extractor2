@@ -1,14 +1,15 @@
-﻿from collections import Counter
-import sys
 import logging
+import sys
+from collections import Counter
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
+from adapters.audio.wav_reader import ZipWavFileReader
 from adapters.filesystem.file_discovery import discover_and_pair_files
-from pdf_extractor import extract_pdf_tracklist
-from core.domain.extraction import extract_wav_durations_sf
 from core.domain.comparison import compare_data
 from config import cfg
+from pdf_extractor import extract_pdf_tracklist
 from ui.config_models import load_id_extraction_settings, load_tolerance_settings
 
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
@@ -24,6 +25,7 @@ if not pdf_dir.exists() or not wav_dir.exists():
 
 tolerance_settings = load_tolerance_settings(cfg)
 id_extraction_settings = load_id_extraction_settings(cfg)
+wav_reader = ZipWavFileReader()
 
 pairs, skipped = discover_and_pair_files(pdf_dir, wav_dir, id_extraction_settings)
 print(f"Found {len(pairs)} pair(s); {skipped} ambiguous skipped")
@@ -32,7 +34,7 @@ all_results = []
 for i, (file_id, pair_info) in enumerate(pairs.items(), 1):
     print(f"Processing {i}/{len(pairs)}: {pair_info['pdf'].name}")
     pdf_data = extract_pdf_tracklist(pair_info['pdf'])
-    wav_data = extract_wav_durations_sf(pair_info['zip'])
+    wav_data = wav_reader.read_wav_files(pair_info['zip'])
     side_results = compare_data(pdf_data, wav_data, pair_info, tolerance_settings)
     all_results.extend(side_results)
 
@@ -43,4 +45,3 @@ print("Status counts:", dict(status_counts))
 
 # Exit code 0 if at least one result, else 1
 sys.exit(0 if all_results else 1)
-
