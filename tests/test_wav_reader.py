@@ -35,8 +35,8 @@ def _patch_duration(monkeypatch: pytest.MonkeyPatch, factory: Callable[[Path], f
 
 def test_read_wav_files_success(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     entries = {
-        "disc/A1_first.wav": b"data-a",
         "disc/B2_second.wav": b"data-b",
+        "disc/A1_first.wav": b"data-a",
     }
     zip_path = _build_zip(tmp_path, entries)
 
@@ -154,8 +154,8 @@ def test_read_wav_files_duplicate_basenames(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     entries = {
-        "sideA/track.wav": b"one",
         "sideB/track.wav": b"two",
+        "sideA/track.wav": b"one",
     }
     zip_path = _build_zip(tmp_path, entries)
 
@@ -174,3 +174,21 @@ def test_read_wav_files_duplicate_basenames(
     assert [info.filename for info in wav_infos] == ["sideA/track.wav", "sideB/track.wav"]
     assert [info.duration_sec for info in wav_infos] == [1.23, 4.56]
     assert {p.parent.name for p in recorded_paths} == {"sideA", "sideB"}
+
+
+def test_read_wav_files_skips_zero_duration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    zip_path = _build_zip(tmp_path, {"only.wav": b"zero"})
+
+    def zero_duration(_: Path) -> float:
+        return 0.0
+
+    _patch_duration(monkeypatch, zero_duration)
+
+    reader = ZipWavFileReader()
+    with caplog.at_level(logging.WARNING):
+        wav_infos = reader.read_wav_files(zip_path)
+
+    assert wav_infos == []
+    assert any("neplatnou délku" in message for message in caplog.messages)

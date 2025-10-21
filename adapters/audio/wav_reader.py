@@ -25,7 +25,10 @@ class ZipWavFileReader:
         wav_infos: list[WavInfo] = []
         try:
             with zipfile.ZipFile(zip_path, "r") as zf:
-                names = [name for name in zf.namelist() if name.lower().endswith(".wav")]
+                names = sorted(
+                    [name for name in zf.namelist() if name.lower().endswith(".wav")],
+                    key=lambda value: value.lower(),
+                )
                 if not names:
                     return wav_infos
 
@@ -51,6 +54,14 @@ class ZipWavFileReader:
                             with zf.open(name) as src, dest.open("wb") as dst:
                                 shutil.copyfileobj(src, dst)
                             duration = get_wav_duration(dest)
+                            if duration <= 0.0:
+                                logging.warning(
+                                    "WAV '%s' z archivu '%s' má neplatnou délku %.3fs; přeskočeno",
+                                    safe_relative.as_posix(),
+                                    zip_path.name,
+                                    duration,
+                                )
+                                continue
                             wav_infos.append(
                                 WavInfo(
                                     filename=safe_relative.as_posix(),
