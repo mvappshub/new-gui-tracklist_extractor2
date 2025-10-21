@@ -4,10 +4,10 @@ import logging
 from pathlib import Path
 from typing import Callable
 
+from adapters.audio.wav_reader import ZipWavFileReader
 from adapters.filesystem.file_discovery import discover_and_pair_files
 from core.domain.comparison import compare_data
-from core.domain.extraction import extract_wav_durations_sf
-from core.models.analysis import TrackInfo
+from core.domain.extraction import WavReader
 from core.models.settings import IdExtractionSettings, ToleranceSettings
 from pdf_extractor import extract_pdf_tracklist
 
@@ -24,9 +24,11 @@ class AnalysisService:
         self,
         tolerance_settings: ToleranceSettings,
         id_extraction_settings: IdExtractionSettings,
+        wav_reader: WavReader | None = None,
     ) -> None:
         self._tolerance_settings = tolerance_settings
         self._id_extraction_settings = id_extraction_settings
+        self._wav_reader = wav_reader or ZipWavFileReader()
 
     def start_analysis(
         self,
@@ -57,7 +59,7 @@ class AnalysisService:
 
                     # PDF + WAV domain extraction
                     pdf_data = extract_pdf_tracklist(pair_info["pdf"])
-                    wav_data = extract_wav_durations_sf(pair_info["zip"])
+                    wav_data = self._wav_reader.read_wav_files(pair_info["zip"])
 
                     # Domain comparison
                     side_results = compare_data(
