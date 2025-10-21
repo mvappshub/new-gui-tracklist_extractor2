@@ -52,7 +52,7 @@ def test_read_wav_files_success(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     reader = ZipWavFileReader()
     wav_infos = reader.read_wav_files(zip_path)
 
-    assert [info.filename for info in wav_infos] == ["A1_first.wav", "B2_second.wav"]
+    assert [info.filename for info in wav_infos] == ["disc/A1_first.wav", "disc/B2_second.wav"]
     assert [info.duration_sec for info in wav_infos] == [12.34, 56.78]
     assert len(recorded_paths) == 2
 
@@ -128,7 +128,7 @@ def test_read_wav_files_soundfile_fallback(tmp_path: Path, monkeypatch: pytest.M
     results = reader.read_wav_files(zip_path)
 
     assert len(results) == 1
-    assert results[0].filename == "fallback.wav"
+    assert results[0].filename == "folder/fallback.wav"
     assert results[0].duration_sec > 0
 
 
@@ -148,3 +148,29 @@ def test_read_wav_files_duration_extraction_failure(
 
     assert results == []
     assert any("Nelze přečíst hlavičku WAV" in message for message in caplog.messages)
+
+
+def test_read_wav_files_duplicate_basenames(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    entries = {
+        "sideA/track.wav": b"one",
+        "sideB/track.wav": b"two",
+    }
+    zip_path = _build_zip(tmp_path, entries)
+
+    recorded_paths: list[Path] = []
+    durations_iter = iter([1.23, 4.56])
+
+    def fake_get_wav_duration(path: Path) -> float:
+        recorded_paths.append(path)
+        return next(durations_iter)
+
+    _patch_duration(monkeypatch, fake_get_wav_duration)
+
+    reader = ZipWavFileReader()
+    wav_infos = reader.read_wav_files(zip_path)
+
+    assert [info.filename for info in wav_infos] == ["sideA/track.wav", "sideB/track.wav"]
+    assert [info.duration_sec for info in wav_infos] == [1.23, 4.56]
+    assert {p.parent.name for p in recorded_paths} == {"sideA", "sideB"}

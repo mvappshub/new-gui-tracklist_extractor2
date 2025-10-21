@@ -4,7 +4,7 @@ import logging
 import shutil
 import tempfile
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from audio_utils import get_wav_duration
 from core.models.analysis import WavInfo
@@ -33,12 +33,30 @@ class ZipWavFileReader:
                     tmpdir_path = Path(tmpdir)
                     for name in names:
                         try:
-                            base = Path(name).name
-                            dest = tmpdir_path / base
+                            relative_path = PurePosixPath(name)
+                            safe_parts = [
+                                part for part in relative_path.parts if part not in ("", ".", "..")
+                            ]
+                            if not safe_parts:
+                                logging.warning(
+                                    "Přeskakuji podezřelý ZIP člen '%s' v archivu '%s'",
+                                    name,
+                                    zip_path.name,
+                                )
+                                continue
+
+                            safe_relative = PurePosixPath(*safe_parts)
+                            dest = tmpdir_path.joinpath(*safe_relative.parts)
+                            dest.parent.mkdir(parents=True, exist_ok=True)
                             with zf.open(name) as src, dest.open("wb") as dst:
                                 shutil.copyfileobj(src, dst)
                             duration = get_wav_duration(dest)
-                            wav_infos.append(WavInfo(filename=base, duration_sec=duration))
+                            wav_infos.append(
+                                WavInfo(
+                                    filename=safe_relative.as_posix(),
+                                    duration_sec=duration,
+                                )
+                            )
                         except Exception as exc:  # noqa: BLE001
                             logging.warning(
                                 "Nelze přečíst hlavičku WAV '%s' v archivu '%s': %s",
