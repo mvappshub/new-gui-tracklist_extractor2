@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+import logging
+import os
 from pathlib import Path
 
 from PyQt6.QtWidgets import (
     QDialog,
-    QVBoxLayout,
-    QScrollArea,
-    QFrame,
     QDialogButtonBox,
+    QFrame,
     QMessageBox,
+    QScrollArea,
+    QVBoxLayout,
 )
 
 from config import save_config
@@ -40,10 +42,35 @@ class SettingsDialog(QDialog):
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
 
+    def _show_safe_message_box(
+        self,
+        title: str,
+        text: str,
+        icon: QMessageBox.Icon = QMessageBox.Icon.Information,
+    ):
+        if os.getenv("QT_QPA_PLATFORM") == "offscreen":
+            logging.error(f"MODAL_DIALOG_BLOCKED: Title: {title}, Text: {text}")
+            return
+
+        parent = self.parent()
+        if parent and hasattr(parent, "_show_safe_message_box"):
+            parent._show_safe_message_box(title, text, icon)
+            return
+
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(icon)
+        msg_box.setText(text)
+        msg_box.setWindowTitle(title)
+        msg_box.exec()
+
     def _on_save(self) -> None:
         """Handle save button click - save config and accept dialog."""
         try:
             save_config(self.settings_filename)
             self.accept()
         except Exception as exc:
-            QMessageBox.critical(self, "Save Error", f"Failed to save settings:\n{exc}")
+            self._show_safe_message_box(
+                "Save Error",
+                f"Failed to save settings:\n{exc}",
+                QMessageBox.Icon.Critical,
+            )

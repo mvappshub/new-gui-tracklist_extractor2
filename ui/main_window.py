@@ -1,31 +1,32 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QModelIndex, QUrl, QTimer, QEvent, QSize
+from PyQt6.QtCore import QEvent, QModelIndex, QSize, Qt, QTimer, QUrl
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
+    QHBoxLayout,
     QHeaderView,
     QLabel,
     QMainWindow,
     QMessageBox,
-    QPushButton,
     QProgressBar,
+    QPushButton,
+    QSizePolicy,
     QSplitter,
     QTableView,
     QToolBar,
     QVBoxLayout,
-    QHBoxLayout,
     QWidget,
-    QSizePolicy,
 )
 
+from core.models.settings import ExportSettings, ToleranceSettings
 from pdf_viewer import PdfViewerDialog
 from services.export_service import export_results_to_json
-from core.models.settings import ExportSettings, ToleranceSettings
 from ui.config_models import ThemeSettings, WaveformSettings
 from ui.constants import *
 from ui.dialogs.settings_dialog import SettingsDialog
@@ -35,6 +36,22 @@ from ui.workers.worker_manager import AnalysisWorkerManager
 
 
 class MainWindow(QMainWindow):
+    def _show_safe_message_box(
+        self,
+        title: str,
+        text: str,
+        icon: QMessageBox.Icon = QMessageBox.Icon.Information,
+    ):
+        if os.getenv("QT_QPA_PLATFORM") == "offscreen":
+            logging.error(f"MODAL_DIALOG_BLOCKED: Title: {title}, Text: {text}")
+            return
+
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(icon)
+        msg_box.setText(text)
+        msg_box.setWindowTitle(title)
+        msg_box.exec()
+
     def __init__(
         self,
         *,
@@ -362,22 +379,30 @@ class MainWindow(QMainWindow):
                 wav_track = result.wav_tracks[0]
 
         if not wav_track or not wav_track.filename:
-            QMessageBox.information(self, "Waveform Unavailable", "No WAV track is available for waveform preview.")
+            self._show_safe_message_box(
+                "Waveform Unavailable",
+                "No WAV track is available for waveform preview.",
+                QMessageBox.Icon.Information,
+            )
             return
 
         if not result.zip_path or not result.zip_path.exists():
-            QMessageBox.warning(self, "Missing ZIP", "The associated ZIP archive could not be found on disk.")
+            self._show_safe_message_box(
+                "Missing ZIP",
+                "The associated ZIP archive could not be found on disk.",
+                QMessageBox.Icon.Warning,
+            )
             return
 
         try:
             from waveform_viewer import WaveformEditorDialog
         except ImportError as exc:
             logging.error("Waveform editor dependencies missing: %s", exc, exc_info=True)
-            QMessageBox.warning(
-                self,
+            self._show_safe_message_box(
                 "Waveform Editor Unavailable",
                 "Waveform editor requires optional dependencies (pyqtgraph, soundfile). "
                 "Install them to enable waveform editing.",
+                QMessageBox.Icon.Warning,
             )
             return
 
@@ -407,10 +432,10 @@ class MainWindow(QMainWindow):
             dialog.exec()
         except Exception as exc:
             logging.error("Failed to open waveform viewer: %s", exc, exc_info=True)
-            QMessageBox.warning(
-                self,
+            self._show_safe_message_box(
                 "Waveform Error",
                 f"Could not open waveform viewer.\n\nError: {exc}",
+                QMessageBox.Icon.Warning,
             )
 
     def open_settings(self):
