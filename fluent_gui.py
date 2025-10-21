@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # DEPRECATION WARNING:
 # This file is a backward-compatibility wrapper.
 # New development should use the modular components from the `ui/` package
@@ -11,8 +10,6 @@ from PyQt6.QtWidgets import QApplication, QDialogButtonBox
 from config import cfg, load_config
 from core.models.analysis import SideResult, TrackInfo, WavInfo
 from ui import (
-    AnalysisWorker,
-    AnalysisWorkerManager,
     BUTTON_RUN_ANALYSIS,
     COLOR_WHITE,
     COMMENT_APP_STARTUP,
@@ -36,9 +33,7 @@ from ui import (
     MSG_NO_PAIRS,
     MSG_PROCESSING_PAIR,
     MSG_SCANNING,
-    MainWindow as UIMainWindow,
     PLACEHOLDER_DASH,
-    ResultsTableModel,
     SETTINGS_FILENAME,
     STATUS_ANALYZING,
     STATUS_FAIL,
@@ -50,18 +45,32 @@ from ui import (
     SYMBOL_OPEN,
     TABLE_HEADERS_BOTTOM,
     TABLE_HEADERS_TOP,
-    TracksTableModel,
     WINDOW_TITLE,
-    get_gz_color as _ui_get_gz_color,
+    AnalysisWorker,
+    AnalysisWorkerManager,
+    ResultsTableModel,
+    TracksTableModel,
     load_export_settings,
-    load_gz_media_fonts as _ui_load_fonts,
-    load_gz_media_stylesheet as _ui_load_stylesheet,
-    load_theme_settings,
     load_id_extraction_settings,
-    load_waveform_settings,
+    load_theme_settings,
     load_tolerance_settings,
+    load_waveform_settings,
     load_worker_settings,
+)
+from ui import (
+    MainWindow as UIMainWindow,
+)
+from ui import (
     SettingsDialog as UISettingsDialog,
+)
+from ui import (
+    get_gz_color as _ui_get_gz_color,
+)
+from ui import (
+    load_gz_media_fonts as _ui_load_fonts,
+)
+from ui import (
+    load_gz_media_stylesheet as _ui_load_stylesheet,
 )
 from ui.theme import get_system_file_icon
 

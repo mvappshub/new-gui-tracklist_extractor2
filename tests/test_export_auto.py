@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Pytest testy pro automatizovanou validaci auto-export funkcionality.
@@ -13,17 +12,18 @@ Testuje všechny čtyři scénáře ze spec:
 
 import json
 import logging
-import pytest
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
-from datetime import datetime
 
-pytestmark = pytest.mark.qt_no_exception_capture
+import pytest
 
 # Import funkcionality pro testování
-from services.export_service import export_results_to_json
 from core.models.analysis import SideResult, TrackInfo, WavInfo
 from core.models.settings import ExportSettings
+from services.export_service import export_results_to_json
+
+pytestmark = pytest.mark.qt_no_exception_capture
 
 
 class TestExportAuto:
@@ -74,7 +74,7 @@ class TestExportAuto:
         assert result_path.name.endswith('.json')
 
         # Ověřit obsah JSON
-        with open(result_path, 'r', encoding='utf-8') as f:
+        with open(result_path, encoding='utf-8') as f:
             data = json.load(f)
 
         assert "exported_at" in data
@@ -101,7 +101,7 @@ class TestExportAuto:
         assert isinstance(result["pdf_path"], str)
         assert isinstance(result["zip_path"], str)
         assert isinstance(result["total_pdf_sec"], int)
-        assert isinstance(result["total_wav_sec"], (int, float))
+        assert isinstance(result["total_wav_sec"], int | float)
 
     def test_export_disabled(self, tmp_path):
         """Test 2.2: Ověřit, že když export.auto=False, žádný JSON soubor není vytvořen."""
@@ -219,7 +219,7 @@ class TestExportAuto:
         # Assert
         assert result_path is not None
 
-        with open(result_path, 'r', encoding='utf-8') as f:
+        with open(result_path, encoding='utf-8') as f:
             data = json.load(f)
 
             # Ověřit základní strukturu
@@ -242,7 +242,7 @@ class TestExportAuto:
             assert isinstance(result["pdf_path"], str)
             assert isinstance(result["zip_path"], str)
             assert isinstance(result["total_pdf_sec"], int)
-            assert isinstance(result["total_wav_sec"], (int, float))
+            assert isinstance(result["total_wav_sec"], int | float)
 
             # Ověřit strukturu tracks
             assert len(result["pdf_tracks"]) == 1
