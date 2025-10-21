@@ -19,7 +19,7 @@ The system SHALL discover PDF and ZIP files in configured directories and pair t
 - **THEN** the system returns an empty pairs dictionary
 
 ### Requirement: Numeric ID Extraction
-The system SHALL extract numeric IDs from filenames based on configurable digit length and ignore list.
+The system SHALL extract numeric IDs from filenames using injected ID extraction settings that specify digit length and ignore list constraints.
 
 #### Scenario: ID filtering by length
 - **WHEN** filename is "test_12345_master.zip" and min_digits=3, max_digits=6
@@ -29,8 +29,13 @@ The system SHALL extract numeric IDs from filenames based on configurable digit 
 - **WHEN** filename contains "2024" and ignore_numbers includes "2024"
 - **THEN** the system excludes 2024 from extracted IDs
 
+#### Scenario: Injected ID extraction settings
+- **WHEN** different `IdExtractionSettings` objects are supplied to `extract_numeric_id()`
+- **THEN** the function filters IDs according to those settings
+- **AND** behavior remains deterministic without relying on global config
+
 ### Requirement: Track Comparison
-The system SHALL compare PDF tracklist durations with WAV file durations using strongly-typed Pydantic models and classify mismatches based on configurable tolerances.
+The system SHALL compare PDF tracklist durations with WAV file durations using injected tolerance settings together with strongly-typed Pydantic models and classify mismatches based on configurable tolerances.
 
 #### Scenario: Perfect match
 - **WHEN** PDF track duration is 240s and WAV duration is 240.1s
@@ -49,6 +54,11 @@ The system SHALL compare PDF tracklist durations with WAV file durations using s
 - **THEN** the system constructs `SideResult` with model instances directly
 - **AND** no dictionary conversion or type casting occurs
 
+#### Scenario: Injected tolerance settings
+- **WHEN** `compare_data()` is called with `ToleranceSettings(warn_tolerance=2, fail_tolerance=5)`
+- **THEN** the provided thresholds drive warning and failure classification
+- **AND** no global configuration is accessed inside the function
+
 ### Requirement: Code Quality Standards
 The system SHALL maintain zero unreachable code and pass strict type checking.
 
@@ -61,4 +71,23 @@ The system SHALL maintain zero unreachable code and pass strict type checking.
 - **WHEN** mypy runs with --strict flag
 - **THEN** all type annotations are valid
 - **AND** no type: ignore comments are needed for core domain logic
+
+### Requirement: Configuration Dependency Injection
+The system SHALL inject configuration settings as explicit parameters to domain and adapter functions instead of accessing global state.
+
+#### Scenario: Domain layer purity
+- **WHEN** domain functions in `core/domain/` are invoked
+- **THEN** all configuration is received via function parameters
+- **AND** no global `cfg` imports exist in domain layer
+
+#### Scenario: Adapter layer purity
+- **WHEN** adapter functions in `adapters/` are invoked
+- **THEN** all configuration is received via function parameters
+- **AND** no global `cfg` imports exist in adapter layer
+
+#### Scenario: Entry point responsibility
+- **WHEN** application entry points (`app.py`, `fluent_gui.py`) start
+- **THEN** they load configuration from global `cfg`
+- **AND** construct settings dataclasses
+- **AND** inject settings into lower layers
 

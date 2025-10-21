@@ -4,7 +4,7 @@
 Defines expected behavior, interfaces, and stability rules for the respective module.
 ## Requirements
 ### Requirement: Auto Export Analysis Results
-The system SHALL automatically export analysis results to JSON after each analysis run when `export.auto` is true.
+The system SHALL automatically export analysis results to JSON after each analysis run when `export.auto` is true, using injected export settings.
 
 #### Scenario: Success
 - WHEN an analysis run completes with one or more `SideResult` items
@@ -29,6 +29,11 @@ The system SHALL automatically export analysis results to JSON after each analys
 - WHEN an analysis run completes and export is enabled
 - THEN the app logs an error and continues without crashing
 
+#### Scenario: Injected export settings
+- **WHEN** `ExportSettings(auto_export=True, export_dir=Path("exports"))` is provided
+- **THEN** export decisions rely solely on the injected settings object
+- **AND** no global configuration is accessed during export
+
 ### Requirement: Golden Output Generation
 The system SHALL support generating reference JSON outputs for regression testing.
 
@@ -47,4 +52,17 @@ The system SHALL support generating reference JSON outputs for regression testin
 - **WHEN** comparing golden outputs with current results
 - **THEN** duration fields allow small floating-point differences (≤0.01s)
 - **AND** integer fields require exact matches
+
+### Requirement: Export Settings Dataclass
+The system SHALL use `ExportSettings` dataclass to encapsulate export configuration.
+
+#### Scenario: Settings construction
+- **WHEN** entry point loads configuration
+- **THEN** it constructs `ExportSettings(auto_export=bool, export_dir=Path)` from global config
+- **AND** passes settings to export service
+
+#### Scenario: Settings validation
+- **WHEN** `ExportSettings` is constructed with invalid values
+- **THEN** validation occurs at construction time
+- **AND** errors are caught early in entry point
 

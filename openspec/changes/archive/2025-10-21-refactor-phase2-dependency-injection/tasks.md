@@ -11,7 +11,7 @@
 - [x] 2.3 Replace `cfg.analysis_tolerance_fail.value` (line 45) with `tolerance_settings.fail_tolerance`
 - [x] 2.4 Remove `from config import cfg` import (line 7)
 - [x] 2.5 Update function docstring to document new parameter
-- [ ] 2.6 Run `mypy --strict core/domain/comparison.py` to verify type safety
+- [x] 2.6 Run `mypy --strict core/domain/comparison.py` to verify type safety
 
 ## 3. Refactor Adapter Layer (adapters/filesystem/)
 - [x] 3.1 Update `extract_numeric_id()` signature in `adapters/filesystem/file_discovery.py` to accept `settings: IdExtractionSettings` parameter
@@ -22,7 +22,7 @@
 - [x] 3.6 Pass `settings` to `extract_numeric_id()` calls (lines 60, 69)
 - [x] 3.7 Remove `from config import cfg` import (line 7)
 - [x] 3.8 Update function docstrings to document new parameters
-- [ ] 3.9 Run `mypy --strict adapters/filesystem/file_discovery.py` to verify type safety
+- [x] 3.9 Run `mypy --strict adapters/filesystem/file_discovery.py` to verify type safety
 
 ## 4. Update Service Layer and Workers
 - [x] 4.1 Locate `AnalysisWorker` class in `ui/workers/analysis_worker.py`
@@ -43,7 +43,7 @@
 - [x] 6.2 Create pytest fixtures in `tests/conftest.py`: `@pytest.fixture def tolerance_settings()`, `@pytest.fixture def id_extraction_settings()`
 - [x] 6.3 Update test functions to accept settings fixtures as parameters
 - [x] 6.4 Remove direct `cfg` usage from characterization and export tests while leaving configuration-focused suites (`test_config.py`, `test_settings_dialog.py`) unchanged
-- [ ] 6.5 Parametrize tests to verify different settings combinations (e.g., different tolerance thresholds, different ID digit ranges)
+- [x] 6.5 Parametrize tests to verify different settings combinations (e.g., different tolerance thresholds, different ID digit ranges)
 - [x] 6.6 Keep `cfg` import in `test_config.py` since it tests the config system itself
 
 ## 7. Remove Remaining Global Config Imports
@@ -59,4 +59,4 @@
 - [x] 8.5 Verify all delta specs have at least one `#### Scenario:` per requirement
 - [x] 8.6 Confirm proposal.md clearly explains non-breaking nature
 - [x] 8.7 Update tasks.md checkboxes as work progresses
-- [ ] 8.8 Final smoke test: run application and perform analysis to verify functionality unchanged
+- [x] 8.8 Final smoke test: run application and perform analysis to verify functionality unchanged
