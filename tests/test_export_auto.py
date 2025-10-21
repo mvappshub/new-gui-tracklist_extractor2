@@ -21,7 +21,8 @@ from datetime import datetime
 pytestmark = pytest.mark.qt_no_exception_capture
 
 # Import funkcionality pro testování
-from fluent_gui import _export_results_to_json, SideResult, TrackInfo, WavInfo
+from services.export_service import export_results_to_json
+from core.models.analysis import SideResult, TrackInfo, WavInfo
 from core.models.settings import ExportSettings
 
 
@@ -60,7 +61,7 @@ class TestExportAuto:
         )
 
         # Act
-        result_path = _export_results_to_json(mock_results, export_settings)
+        result_path = export_results_to_json(mock_results, export_settings)
 
         # Assert
         assert result_path is not None
@@ -114,7 +115,7 @@ class TestExportAuto:
         )
 
         # Act
-        result_path = _export_results_to_json(mock_results, export_settings)
+        result_path = export_results_to_json(mock_results, export_settings)
 
         # Assert
         assert result_path is None
@@ -135,7 +136,7 @@ class TestExportAuto:
         )
 
         # Act
-        result_path = _export_results_to_json(mock_results, export_settings)
+        result_path = export_results_to_json(mock_results, export_settings)
 
         # Assert
         assert result_path is not None
@@ -160,7 +161,7 @@ class TestExportAuto:
             mock_json_dump.side_effect = PermissionError("Access denied")
 
             # Act
-            result_path = _export_results_to_json(mock_results, export_settings)
+            result_path = export_results_to_json(mock_results, export_settings)
 
             # Assert
             assert result_path is None  # Žádný soubor nebyl vytvořen kvůli chybě
@@ -180,7 +181,7 @@ class TestExportAuto:
         export_settings = ExportSettings(auto_export=True, export_dir=export_dir)
 
         # Act
-        result_path = _export_results_to_json(empty_results, export_settings)
+        result_path = export_results_to_json(empty_results, export_settings)
 
         # Assert
         assert result_path is None
@@ -213,7 +214,7 @@ class TestExportAuto:
         export_settings = ExportSettings(auto_export=True, export_dir=export_dir)
 
         # Act
-        result_path = _export_results_to_json(mock_results, export_settings)
+        result_path = export_results_to_json(mock_results, export_settings)
 
         # Assert
         assert result_path is not None
@@ -268,7 +269,7 @@ class TestExportAuto:
              caplog.at_level(logging.ERROR):
 
             # Act
-            result_path = _export_results_to_json(
+            result_path = export_results_to_json(
                 [self.create_mock_side_result(1)],
                 export_settings,
             )
