@@ -16,7 +16,7 @@ from ui.constants import (
     SYMBOL_CROSS,
     TABLE_HEADERS_BOTTOM,
 )
-from ui.theme import get_system_file_icon
+from ui.theme import get_custom_icon
 
 
 class TracksTableModel(QAbstractTableModel):
@@ -52,6 +52,36 @@ class TracksTableModel(QAbstractTableModel):
         column = index.column()
         is_total_row = row == self.rowCount() - 1
 
+        # Column 6 (Match) - Icon rendering
+        if role == Qt.ItemDataRole.DecorationRole and column == 6 and not is_total_row:
+            if self._data.mode == "tracks":
+                pdf_track = self._data.pdf_tracks[row] if row < len(self._data.pdf_tracks) else None
+                wav_track = self._data.wav_tracks[row] if row < len(self._data.wav_tracks) else None
+
+                if pdf_track and wav_track:
+                    difference = wav_track.duration_sec - pdf_track.duration_sec
+                    try:
+                        track_tolerance = float(self.tolerance_settings.warn_tolerance)
+                    except (TypeError, ValueError):
+                        track_tolerance = 2.0
+
+                    # Return check or cross icon based on tolerance
+                    if abs(difference) <= track_tolerance:
+                        return get_custom_icon('check')
+                    else:
+                        return get_custom_icon('cross')
+                else:
+                    return get_custom_icon('cross')
+            return None
+
+        # Column 6 (Match) - Total row icon
+        if role == Qt.ItemDataRole.DecorationRole and column == 6 and is_total_row:
+            if self._data.status == STATUS_OK:
+                return get_custom_icon('check')
+            else:
+                return get_custom_icon('cross')
+
+        # Column 7 (Waveform) - Icon rendering
         if role == Qt.ItemDataRole.DecorationRole and column == 7 and not is_total_row:
             wav_track_exists = False
             if self._data.mode == "tracks":
@@ -59,7 +89,7 @@ class TracksTableModel(QAbstractTableModel):
             else:
                 wav_track_exists = bool(self._data.wav_tracks)
             if wav_track_exists:
-                return get_system_file_icon("play")
+                return get_custom_icon('play')
 
         if role == Qt.ItemDataRole.ToolTipRole and column == 7 and not is_total_row:
             return "View waveform"
@@ -92,6 +122,9 @@ class TracksTableModel(QAbstractTableModel):
             return font
 
         if role == Qt.ItemDataRole.TextAlignmentRole and column == 7:
+            return Qt.AlignmentFlag.AlignCenter
+
+        if role == Qt.ItemDataRole.TextAlignmentRole and column == 6:
             return Qt.AlignmentFlag.AlignCenter
 
         return None
@@ -128,7 +161,8 @@ class TracksTableModel(QAbstractTableModel):
             if column == 5:
                 return f"{difference:+.0f}" if difference is not None else PLACEHOLDER_DASH
             if column == 6:
-                return match_symbol
+                # Return empty string - icon is shown via DecorationRole
+                return ""
             if column == 7:
                 return ""
         else:
@@ -168,7 +202,8 @@ class TracksTableModel(QAbstractTableModel):
         if column == 5:
             return f"{self._data.total_difference:+.0f}"
         if column == 6:
-            return SYMBOL_CHECK if self._data.status == STATUS_OK else SYMBOL_CROSS
+            # Return empty string - icon is shown via DecorationRole
+            return ""
         if column == 7:
             return ""
         return ""

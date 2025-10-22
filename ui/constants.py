@@ -27,6 +27,9 @@ COLOR_WHITE = "white"
 STATUS_OK = "OK"
 STATUS_WARN = "WARN"
 STATUS_FAIL = "FAIL"
+
+# Deprecated: Use get_custom_icon('check') and get_custom_icon('cross') instead
+# These constants are kept for backward compatibility but are no longer used in UI rendering
 SYMBOL_CHECK = "✓"
 SYMBOL_CROSS = "✗"
 PLACEHOLDER_DASH = "-"

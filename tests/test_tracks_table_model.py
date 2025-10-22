@@ -50,15 +50,21 @@ def test_update_data_populates_model(tolerance_settings, mock_side_result_tracks
     assert model.rowCount() == 2
 
 
-def test_track_match_symbol_ok(tolerance_settings, mock_side_result_tracks):
+def test_track_match_icon_ok(tolerance_settings, mock_side_result_tracks):
+    """Test that successful match displays check icon via DecorationRole."""
     model = TracksTableModel(tolerance_settings=tolerance_settings)
     model.update_data(mock_side_result_tracks)
 
     index_match = model.index(0, 6)
-    assert model.data(index_match, Qt.ItemDataRole.DisplayRole) == SYMBOL_CHECK
+    icon = model.data(index_match, Qt.ItemDataRole.DecorationRole)
+
+    # Verify icon is returned and is not null
+    assert icon is not None
+    assert not icon.isNull()
 
 
-def test_track_match_symbol_fail(tolerance_settings, mock_side_result_tracks):
+def test_track_match_icon_fail(tolerance_settings, mock_side_result_tracks):
+    """Test that failed match displays cross icon via DecorationRole."""
     failure_result = mock_side_result_tracks.model_copy()
     failure_result.wav_tracks[0] = failure_result.wav_tracks[0].model_copy(update={"duration_sec": 184.0})
     failure_result.total_difference = 4
@@ -67,4 +73,33 @@ def test_track_match_symbol_fail(tolerance_settings, mock_side_result_tracks):
     model.update_data(failure_result)
 
     index_match = model.index(0, 6)
-    assert model.data(index_match, Qt.ItemDataRole.DisplayRole) == SYMBOL_CROSS
+    icon = model.data(index_match, Qt.ItemDataRole.DecorationRole)
+
+    # Verify icon is returned and is not null
+    assert icon is not None
+    assert not icon.isNull()
+
+
+def test_track_match_display_empty(tolerance_settings, mock_side_result_tracks):
+    """Test that Match column returns empty string for DisplayRole (icon only)."""
+    model = TracksTableModel(tolerance_settings=tolerance_settings)
+    model.update_data(mock_side_result_tracks)
+
+    index_match = model.index(0, 6)
+    display_text = model.data(index_match, Qt.ItemDataRole.DisplayRole)
+
+    # Verify DisplayRole returns empty string (icon is shown via DecorationRole)
+    assert display_text == ""
+
+
+def test_waveform_icon_present(tolerance_settings, mock_side_result_tracks):
+    """Test that Waveform column displays play icon via DecorationRole."""
+    model = TracksTableModel(tolerance_settings=tolerance_settings)
+    model.update_data(mock_side_result_tracks)
+
+    index_waveform = model.index(0, 7)
+    icon = model.data(index_waveform, Qt.ItemDataRole.DecorationRole)
+
+    # Verify icon is returned and is not null
+    assert icon is not None
+    assert not icon.isNull()

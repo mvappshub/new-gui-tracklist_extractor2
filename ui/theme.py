@@ -6,6 +6,49 @@ from PyQt6.QtGui import QIcon, QFont
 from PyQt6.QtWidgets import QApplication, QStyle
 
 
+# Icon cache for performance
+_icon_cache: Dict[str, QIcon] = {}
+
+
+def get_custom_icon(icon_name: str) -> QIcon:
+    """Load a custom SVG icon from assets/icons/ with caching.
+
+    Args:
+        icon_name: Name of the icon without extension (e.g., 'check', 'cross', 'play')
+
+    Returns:
+        QIcon object loaded from SVG file, or empty QIcon if file not found
+    """
+    # Check cache first
+    if icon_name in _icon_cache:
+        return _icon_cache[icon_name]
+
+    try:
+        # Construct path relative to project root
+        project_root = Path(__file__).resolve().parent.parent
+        icon_path = project_root / "assets" / "icons" / f"{icon_name}.svg"
+
+        if not icon_path.exists():
+            logging.warning(f"Custom icon not found: {icon_path}")
+            return QIcon()
+
+        # Load icon from SVG
+        icon = QIcon(str(icon_path))
+
+        if icon.isNull():
+            logging.warning(f"Failed to load custom icon: {icon_path}")
+            return QIcon()
+
+        # Cache for future use
+        _icon_cache[icon_name] = icon
+        logging.debug(f"Loaded custom icon: {icon_name}")
+        return icon
+
+    except Exception as exc:
+        logging.error(f"Error loading custom icon '{icon_name}': {exc}")
+        return QIcon()
+
+
 def get_system_file_icon(icon_type: str = "file") -> QIcon:
     """Return a standard system icon for files, directories, or actions."""
     try:
