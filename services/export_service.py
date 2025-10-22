@@ -65,6 +65,7 @@ def export_results_to_json(results: list[SideResult], export_settings: ExportSet
             continue
         except Exception:  # pragma: no cover
             logging.error("Failed to export analysis results to %s", out_path, exc_info=True)
+            out_path.unlink(missing_ok=True)
             return None
 
     logging.error("Could not create unique filename for export in %s", export_dir)  # pragma: no cover

@@ -101,7 +101,7 @@ class TestExportAuto:
         assert isinstance(result["pdf_path"], str)
         assert isinstance(result["zip_path"], str)
         assert isinstance(result["total_pdf_sec"], int)
-        assert isinstance(result["total_wav_sec"], int | float)
+        assert isinstance(result["total_wav_sec"], (int, float))
 
     def test_export_disabled(self, tmp_path):
         """Test 2.2: Ověřit, že když export.auto=False, žádný JSON soubor není vytvořen."""
