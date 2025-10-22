@@ -4,7 +4,6 @@ import logging
 from pathlib import Path
 from typing import Callable
 
-from adapters.audio.ai_mode_detector import AiAudioModeDetector
 from adapters.audio.wav_reader import ZipWavFileReader
 from adapters.filesystem.file_discovery import discover_and_pair_files
 from core.domain.comparison import compare_data
@@ -32,7 +31,10 @@ class AnalysisService:
         self._tolerance_settings = tolerance_settings
         self._id_extraction_settings = id_extraction_settings
         self._wav_reader = wav_reader or ZipWavFileReader()
-        self._audio_mode_detector = audio_mode_detector or AiAudioModeDetector()
+        if audio_mode_detector is None:
+            from adapters.audio.ai_mode_detector import AiAudioModeDetector
+            audio_mode_detector = AiAudioModeDetector()
+        self._audio_mode_detector = audio_mode_detector
 
     def start_analysis(
         self,

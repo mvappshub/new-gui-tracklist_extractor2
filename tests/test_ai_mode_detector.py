@@ -130,15 +130,19 @@ class TestFakeAudioModeDetector:
 
         result = detector.detect(wavs)
 
-        # The fake detector should group all under "A" since it defaults to "A" when side is ambiguous
+        # Assert both "A" and "B" sides are present
         assert "A" in result
-        assert len(result["A"]) == 3
+        assert "B" in result
+        # Verify correct position counts: 2 tracks for side A, 1 track for side B
+        assert len(result["A"]) == 2
+        assert len(result["B"]) == 1
+        # Check position normalization (1, 2 for A side, 1 for B side)
         assert result["A"][0].side == "A"
         assert result["A"][0].position == 1
         assert result["A"][1].side == "A"
         assert result["A"][1].position == 2
-        assert result["A"][2].side == "A"
-        assert result["A"][2].position == 3
+        assert result["B"][0].side == "B"
+        assert result["B"][0].position == 1
 
     def test_fake_detector_with_ambiguous_filenames(self) -> None:
         """Test fake detector with ambiguous filenames (parses 'track' as side)."""
