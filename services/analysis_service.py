@@ -4,11 +4,13 @@ import logging
 from pathlib import Path
 from typing import Callable
 
+from adapters.audio.ai_mode_detector import AiAudioModeDetector
 from adapters.audio.wav_reader import ZipWavFileReader
 from adapters.filesystem.file_discovery import discover_and_pair_files
 from core.domain.comparison import compare_data
 from core.domain.extraction import WavReader
 from core.models.settings import IdExtractionSettings, ToleranceSettings
+from core.ports import AudioModeDetector
 from pdf_extractor import extract_pdf_tracklist
 
 
@@ -17,7 +19,7 @@ class AnalysisService:
 
     Uses callbacks to report progress, results, and completion, so it can run
     in any thread context without Qt dependencies. Configuration settings
-    are injected via the constructor to keep dependencies explicit.
+    and audio mode detector are injected via the constructor to keep dependencies explicit.
     """
 
     def __init__(
@@ -25,10 +27,12 @@ class AnalysisService:
         tolerance_settings: ToleranceSettings,
         id_extraction_settings: IdExtractionSettings,
         wav_reader: WavReader | None = None,
+        audio_mode_detector: AudioModeDetector | None = None,
     ) -> None:
         self._tolerance_settings = tolerance_settings
         self._id_extraction_settings = id_extraction_settings
         self._wav_reader = wav_reader or ZipWavFileReader()
+        self._audio_mode_detector = audio_mode_detector or AiAudioModeDetector()
 
     def start_analysis(
         self,
@@ -67,6 +71,7 @@ class AnalysisService:
                         wav_data,
                         pair_info,
                         self._tolerance_settings,
+                        self._audio_mode_detector,
                     )
 
                     # Emit results
