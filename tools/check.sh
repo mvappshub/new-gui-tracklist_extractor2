@@ -29,10 +29,10 @@ echo "Running mypy in strict mode..."
 "${PYTHON_CMD[@]}" -m mypy --strict core adapters services
 
 if command -v openspec >/dev/null 2>&1; then
-  echo "Validating OpenSpec specifications..."
-  openspec validate refactor-phase4-export-service --strict
+   echo "Validating OpenSpec specifications..."
+   openspec validate refactor-phase5-ai-port --strict
 else
-  echo "Skipping OpenSpec validation (openspec CLI not found)..."
+   echo "Skipping OpenSpec validation (openspec CLI not found)..."
 fi
 
 echo "All checks passed"
