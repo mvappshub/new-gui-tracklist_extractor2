@@ -1,29 +1,29 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
-from typing import cast
 
 from core.models.analysis import SideResult, TrackInfo, WavInfo
 from core.models.settings import ToleranceSettings
-from wav_extractor_wave import detect_audio_mode_with_ai, normalize_positions
+from core.ports import AudioModeDetector
 
-DetectFn = Callable[[list[WavInfo]], dict[str, list[WavInfo]]]
-NormalizeFn = Callable[[dict[str, list[WavInfo]]], None]
-_detect: DetectFn = cast(DetectFn, detect_audio_mode_with_ai)
-_normalize: NormalizeFn = cast(NormalizeFn, normalize_positions)
 
-def detect_audio_mode(wavs: list[WavInfo]) -> tuple[dict[str, str], dict[str, list[WavInfo]]]:
+def detect_audio_mode(wavs: list[WavInfo], detector: AudioModeDetector) -> tuple[dict[str, str], dict[str, list[WavInfo]]]:
     """
     Vylepšená detekce stran/pořadí:
     strict z názvu → AI fallback (je-li k dispozici) → deterministické fallback,
     poté normalizace pořadí per strana.
+
+    Args:
+        wavs: List of WavInfo objects with filename and duration_sec populated.
+        detector: AudioModeDetector instance to use for side/position detection.
+
+    Returns:
+        Tuple of (modes, side_map) where modes maps side to mode string,
+        and side_map maps side to list of WavInfo objects with normalized positions.
     """
-    # Pydantic WavInfo má stejné atributy jako dataclass v extraktoru,
-    # takže to funguje přímo ("duck-typing").
-    side_map = _detect(wavs)
-    _normalize(side_map)
-    # Phase 1 verification: compare_data consumes SideResult data as Pydantic models without dict conversions.
+    # Use the injected detector for side/position detection
+    side_map = detector.detect(wavs)
+    # Detector returns normalized results, so no need for separate normalization
 
     modes: dict[str, str] = {
         side: ('side' if len(items) == 1 else 'tracks')
@@ -37,10 +37,22 @@ def compare_data(
     wav_data: list[WavInfo],
     pair_info: dict[str, Path],
     tolerance_settings: ToleranceSettings,
+    detector: AudioModeDetector,
 ) -> list[SideResult]:
-    """Compare PDF and WAV track data using injected tolerance thresholds."""
+    """Compare PDF and WAV track data using injected tolerance thresholds.
+
+    Args:
+        pdf_data: Dictionary mapping sides to lists of TrackInfo from PDF.
+        wav_data: List of WavInfo objects from WAV files.
+        pair_info: Dictionary with 'pdf' and 'zip' paths.
+        tolerance_settings: ToleranceSettings object with warn/fail thresholds.
+        detector: AudioModeDetector instance to use for side/position detection.
+
+    Returns:
+        List of SideResult objects with comparison results.
+    """
     results: list[SideResult] = []
-    modes, wavs_by_side = detect_audio_mode(wav_data)
+    modes, wavs_by_side = detect_audio_mode(wav_data, detector)
     all_sides = set(pdf_data.keys()) | set(wavs_by_side.keys())
 
     tolerance_warn = tolerance_settings.warn_tolerance
