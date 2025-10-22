@@ -5,6 +5,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
+from adapters.audio.ai_mode_detector import AiAudioModeDetector
 from adapters.audio.wav_reader import ZipWavFileReader
 from adapters.filesystem.file_discovery import discover_and_pair_files
 from core.domain.comparison import compare_data
@@ -26,6 +27,7 @@ if not pdf_dir.exists() or not wav_dir.exists():
 tolerance_settings = load_tolerance_settings(cfg)
 id_extraction_settings = load_id_extraction_settings(cfg)
 wav_reader = ZipWavFileReader()
+audio_mode_detector = AiAudioModeDetector()
 
 pairs, skipped = discover_and_pair_files(pdf_dir, wav_dir, id_extraction_settings)
 print(f"Found {len(pairs)} pair(s); {skipped} ambiguous skipped")
@@ -35,7 +37,7 @@ for i, (file_id, pair_info) in enumerate(pairs.items(), 1):
     print(f"Processing {i}/{len(pairs)}: {pair_info['pdf'].name}")
     pdf_data = extract_pdf_tracklist(pair_info['pdf'])
     wav_data = wav_reader.read_wav_files(pair_info['zip'])
-    side_results = compare_data(pdf_data, wav_data, pair_info, tolerance_settings)
+    side_results = compare_data(pdf_data, wav_data, pair_info, tolerance_settings, audio_mode_detector)
     all_results.extend(side_results)
 
 print(f"Side results: {len(all_results)}")
