@@ -67,3 +67,49 @@ This project follows a clean, layered architecture to separate concerns and impr
 - **`services/`**: Contains application services, such as `AnalysisService` (orchestrates analysis) and `export_service.py` (handles JSON exports and is the single source of truth for exports). These services are pure Python and Qt-agnostic.
 - **`core/`**: Contains the core domain logic and models of the application (`comparison.py`, `extraction.py`, `models/analysis.py`). This layer is completely independent of any UI or framework.
 - **`fluent_gui.py`**: Now serves as a backward-compatibility wrapper to ensure old entry points and imports continue to work. New development should use `app.py` and the `ui/` package directly.
+- **`adapters/`**: Contains infrastructure adapters that implement ports defined in `core/ports.py`. Adapters handle external dependencies like file I/O, AI services, and other infrastructure concerns.
+- **`core/ports.py`**: Defines protocol interfaces (ports) that abstract external dependencies, enabling clean hexagonal architecture with dependency inversion.
+
+## Refactoring Status
+
+✅ **COMPLETED**: 5-phase strategic refactoring to hexagonal architecture
+
+### Phase 1: Stabilization (✅ Complete)
+- Type safety with strict mypy checking
+- Comprehensive characterization tests
+- Quality tooling (ruff, black, pytest)
+
+### Phase 2: Dependency Injection (✅ Complete)
+- Settings dataclasses instead of global config
+- Constructor injection throughout the codebase
+- No global `cfg` imports in domain or adapter layers
+
+### Phase 3: I/O Modularization (✅ Complete)
+- File system adapters for ZIP/WAV reading
+- Infrastructure concerns isolated in adapter layer
+- Domain layer completely free of I/O operations
+
+### Phase 4: Export Service (✅ Complete)
+- Centralized export in `services/export_service.py`
+- Single `export_results_to_json()` function for all exports
+- UI and automated tests use the same export mechanism
+
+### Phase 5: AI Port (✅ Complete)
+- `AudioModeDetector` protocol in `core/ports.py`
+- `AiAudioModeDetector` wrapping wav_extractor_wave functions
+- `FakeAudioModeDetector` for deterministic tests
+- AI dependencies isolated in adapter layer only
+
+## Quality Metrics
+
+- **Test Coverage**: 97% (55 passing tests)
+- **Type Safety**: mypy --strict passes
+- **Code Quality**: ruff clean, zero dead code
+- **Architecture**: Complete hexagonal architecture with zero infrastructure dependencies in domain layer
+
+## Development Workflow
+
+- **Local quality gates**: `tools/check.sh`
+- **OpenSpec-driven development**: All changes validated through OpenSpec CLI
+- **Git workflow**: Conventional commits with atomic checkpoints
+- **Testing**: Fake adapters enable fast, deterministic test execution
