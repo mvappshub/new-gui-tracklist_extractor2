@@ -78,7 +78,7 @@ def test_discover_and_pair_files_matches_golden(
 
 
 @pytest.mark.usefixtures("isolated_config")
-def test_compare_data_matches_golden(tmp_path, tolerance_settings) -> None:
+def test_compare_data_matches_golden(tmp_path, tolerance_settings, audio_mode_detector) -> None:
     pdf_data = {
         "A": [
             TrackInfo(title="Intro", side="A", position=1, duration_sec=120),
@@ -97,7 +97,7 @@ def test_compare_data_matches_golden(tmp_path, tolerance_settings) -> None:
 
     pair_info = {"pdf": tmp_path / "dummy.pdf", "zip": tmp_path / "dummy.zip"}
 
-    results = compare_data(pdf_data, wav_data, pair_info, tolerance_settings)
+    results = compare_data(pdf_data, wav_data, pair_info, tolerance_settings, audio_mode_detector)
     actual_results = []
 
     for item in results:
@@ -123,6 +123,7 @@ def test_compare_data_respects_injected_tolerances(
     warn_tolerance: int,
     fail_tolerance: int,
     expected_status: str,
+    audio_mode_detector,
 ) -> None:
     pdf_data = {
         "A": [
@@ -144,7 +145,7 @@ def test_compare_data_respects_injected_tolerances(
         warn_tolerance=warn_tolerance,
         fail_tolerance=fail_tolerance,
     )
-    results = compare_data(pdf_data, wav_data, pair_info, tolerance)
+    results = compare_data(pdf_data, wav_data, pair_info, tolerance, audio_mode_detector)
     status_by_side = {result.side: result.status for result in results}
     assert status_by_side["B"] == expected_status
 

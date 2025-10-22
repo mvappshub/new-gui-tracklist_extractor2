@@ -13,6 +13,7 @@ from PyQt6.QtCore import QSettings, QTimer
 from PyQt6.QtWidgets import QApplication
 
 import config as config_module
+from adapters.audio.fake_mode_detector import FakeAudioModeDetector
 from core.models.settings import IdExtractionSettings, ToleranceSettings
 from ui.config_models import WaveformSettings
 
@@ -134,3 +135,9 @@ def waveform_settings() -> WaveformSettings:
         position_line_color="#EF4444",
         downsample_factor=10,
     )
+
+
+@pytest.fixture
+def audio_mode_detector() -> FakeAudioModeDetector:
+    """Provide fake audio mode detector for tests (no external API calls)."""
+    return FakeAudioModeDetector()
