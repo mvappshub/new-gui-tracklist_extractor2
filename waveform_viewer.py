@@ -281,7 +281,7 @@ class WaveformEditorDialog(QDialog):
         with zipfile.ZipFile(self._zip_path, "r") as zf:
             matching_entry: Optional[str] = None
             for member in zf.namelist():
-                if Path(member).name == self._wav_filename:
+                if member == self._wav_filename:
                     matching_entry = member
                     break
 
@@ -1011,7 +1011,7 @@ class WaveformViewerDialog(QDialog):
         with zipfile.ZipFile(self._zip_path, "r") as zf:
             matching_entry: Optional[str] = None
             for member in zf.namelist():
-                if Path(member).name == self._wav_filename:
+                if member == self._wav_filename:
                     matching_entry = member
                     break
 

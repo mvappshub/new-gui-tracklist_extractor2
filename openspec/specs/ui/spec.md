@@ -56,13 +56,10 @@ The application SHALL provide clear status information during operations.
 ### Requirement: Table Interactions
 The application SHALL provide interactive tables for browsing analysis results.
 
-#### Scenario: Row selection
-- **WHEN** user selects a row in the top table
-- **THEN** the bottom table updates to show detailed track information
-
-#### Scenario: File access
-- **WHEN** user clicks file icons
-- **THEN** the corresponding files open in system default applications
+#### Scenario: Waveform viewer opens for files in ZIP subdirectories
+- **WHEN** user clicks the "View" button for a WAV file located in a subdirectory of a ZIP archive
+- **THEN** the `WaveformEditorDialog` opens successfully
+- **AND** the correct WAV file is extracted and displayed without a `FileNotFoundError`
 
 ### Requirement: Settings Management
 The application SHALL provide a settings interface using custom PyQt6 components and QSettings for persistence.
