@@ -17,6 +17,38 @@ Tento adresář obsahuje grafické assety pro GZ Media branding aplikace Final C
 - **Rozměry:** Stejné jako bílá varianta
 - **Použití:** Automatické přepínání podle theme modu
 
+## UI Icons
+
+### `icons/check.svg`
+- **Formát:** SVG
+- **Rozměry:** 16x16 pixelů
+- **Barva:** Zelená (#10B981)
+- **Použití:** Indikace úspěšného match v tabulce (sloupec Match)
+- **Design:** Checkmark symbol s kulatými konci
+
+### `icons/cross.svg`
+- **Formát:** SVG
+- **Rozměry:** 16x16 pixelů
+- **Barva:** Červená (#EF4444)
+- **Použití:** Indikace neúspěšného match v tabulce (sloupec Match)
+- **Design:** Cross symbol s kulatými konci
+
+### `icons/play.svg`
+- **Formát:** SVG
+- **Rozměry:** 16x16 pixelů
+- **Barva:** Modrá (#3B82F6)
+- **Použití:** Tlačítko pro zobrazení waveform (sloupec Waveform)
+- **Design:** Play triangle symbol
+
+## Fallback chování
+
+Pokud SVG ikony nejsou nalezeny nebo se nepodaří načíst, aplikace automaticky použije systémové ikony:
+- **check.svg** → Systémová checkmark ikona
+- **cross.svg** → Systémová cross ikona
+- **play.svg** → Systémová play ikona (SP_MediaPlay)
+
+Aplikace zobrazí warning v logu, ale nepřestane fungovat.
+
 ## Technické požadavky
 
 - **Formát:** PNG s průhledností (RGBA)

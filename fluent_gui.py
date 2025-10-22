@@ -4,6 +4,10 @@
 # New development should use the modular components from the `ui/` package
 # and the new entry point `app.py`.
 # Export helpers moved to services/export_service.py.
+#
+# UI CHANGES: Text symbols (SYMBOL_CHECK, SYMBOL_CROSS) are deprecated in favor of
+# custom SVG icons (ICON_CHECK, ICON_CROSS, ICON_PLAY). Use get_custom_icon() for
+# consistent cross-platform icon rendering.
 
 from PyQt6.QtWidgets import QApplication, QDialogButtonBox
 
@@ -12,14 +16,6 @@ from core.models.analysis import SideResult, TrackInfo, WavInfo
 from ui import (
     BUTTON_RUN_ANALYSIS,
     COLOR_WHITE,
-    COMMENT_APP_STARTUP,
-    COMMENT_BUTTON_COLOR,
-    COMMENT_BUTTON_COLOR_DESC,
-    COMMENT_CONFIG_ERROR,
-    COMMENT_CONFIG_LOAD,
-    COMMENT_MAX_WIDTH_WAV,
-    COMMENT_SETUP_BOTTOM_TABLE,
-    COMMENT_SETUP_TOP_TABLE,
     FILTER_ALL,
     FILTER_FAIL,
     FILTER_OK,
@@ -42,7 +38,6 @@ from ui import (
     STATUS_WARN,
     SYMBOL_CHECK,
     SYMBOL_CROSS,
-    SYMBOL_OPEN,
     TABLE_HEADERS_BOTTOM,
     TABLE_HEADERS_TOP,
     WINDOW_TITLE,
@@ -72,7 +67,7 @@ from ui import (
 from ui import (
     load_gz_media_stylesheet as _ui_load_stylesheet,
 )
-from ui.theme import get_system_file_icon
+from ui.theme import get_system_file_icon, get_custom_icon
 
 __all__ = [
     "MainWindow",
@@ -84,6 +79,7 @@ __all__ = [
     "AnalysisWorkerManager",
     "SettingsDialog",
     "get_gz_color",
+    "get_custom_icon",
     "load_gz_media_fonts",
     "load_gz_media_stylesheet",
     "SideResult",
@@ -92,14 +88,6 @@ __all__ = [
     "ICON_OPEN_QICON",
     "BUTTON_RUN_ANALYSIS",
     "COLOR_WHITE",
-    "COMMENT_APP_STARTUP",
-    "COMMENT_BUTTON_COLOR",
-    "COMMENT_BUTTON_COLOR_DESC",
-    "COMMENT_CONFIG_ERROR",
-    "COMMENT_CONFIG_LOAD",
-    "COMMENT_MAX_WIDTH_WAV",
-    "COMMENT_SETUP_BOTTOM_TABLE",
-    "COMMENT_SETUP_TOP_TABLE",
     "FILTER_ALL",
     "FILTER_FAIL",
     "FILTER_OK",
@@ -122,10 +110,13 @@ __all__ = [
     "STATUS_WARN",
     "SYMBOL_CHECK",
     "SYMBOL_CROSS",
-    "SYMBOL_OPEN",
     "TABLE_HEADERS_BOTTOM",
     "TABLE_HEADERS_TOP",
     "WINDOW_TITLE",
+    # Icon constants
+    "ICON_CHECK",
+    "ICON_CROSS",
+    "ICON_PLAY",
 ]
 
 TopTableModel = ResultsTableModel

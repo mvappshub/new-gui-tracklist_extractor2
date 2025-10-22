@@ -31,6 +31,7 @@ class ThemeSettings:
     claim_visible: bool
     claim_text: str
     action_bg_color: str
+    total_row_bg_color: str
 
 
 @dataclass
@@ -126,6 +127,9 @@ def load_theme_settings(cfg: AppConfig) -> ThemeSettings:
     action_color_attr = getattr(cfg, "ui_table_action_bg_color", None)
     action_bg_color = getattr(action_color_attr, "value", "#E0E7FF")
 
+    total_row_bg_attr = getattr(cfg, "ui_total_row_bg_color", None)
+    total_row_bg_color = getattr(total_row_bg_attr, "value", "#F3F4F6")
+
     return ThemeSettings(
         font_family=cfg.ui_base_font_family.value,
         font_size=cfg.ui_base_font_size.value,
@@ -139,6 +143,7 @@ def load_theme_settings(cfg: AppConfig) -> ThemeSettings:
         claim_visible=claim_visible,
         claim_text=claim_text,
         action_bg_color=action_bg_color,
+        total_row_bg_color=total_row_bg_color,
     )
 
 

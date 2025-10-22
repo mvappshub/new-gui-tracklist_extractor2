@@ -227,6 +227,7 @@ class AppConfig:
         self._validators["ui/treeview_row_height"] = (20, 50)
         self._defaults["ui/update_interval_ms"] = 50
         self._validators["ui/update_interval_ms"] = (10, 1000)
+        self._defaults["ui/total_row_bg_color"] = "#F3F4F6"
 
         # GZ Media Brand Configuration
         self._defaults["gz_brand/primary_blue"] = "#1E3A8A"
@@ -600,6 +601,14 @@ class AppConfig:
     @ui_update_interval_ms.setter
     def ui_update_interval_ms(self, value: int) -> None:
         self.set("ui/update_interval_ms", value)
+
+    @property
+    def ui_total_row_bg_color(self) -> ConfigValue:
+        return self.get_value("ui/total_row_bg_color")
+
+    @ui_total_row_bg_color.setter
+    def ui_total_row_bg_color(self, value: str) -> None:
+        self.set("ui/total_row_bg_color", value)
 
     @property
     def ui_window_geometry(self) -> ConfigValue:

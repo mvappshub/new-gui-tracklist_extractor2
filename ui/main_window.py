@@ -99,7 +99,7 @@ class MainWindow(QMainWindow):
 
         self.filter_section = QWidget()
         filter_layout = QHBoxLayout(self.filter_section)
-        filter_layout.setContentsMargins(0, 0, 0, 0)
+        filter_layout.setContentsMargins(8, 0, 8, 0)
         filter_layout.addWidget(QLabel(LABEL_FILTER))
 
         self.filter_combo = QComboBox()
@@ -111,7 +111,7 @@ class MainWindow(QMainWindow):
 
         self.status_box = QWidget()
         status_layout = QHBoxLayout(self.status_box)
-        status_layout.setContentsMargins(0, 0, 0, 0)
+        status_layout.setContentsMargins(8, 0, 0, 0)
         self.progress_bar = QProgressBar()
         self.progress_bar.setObjectName("ProgressBar")
         self.progress_bar.setVisible(False)
@@ -136,7 +136,7 @@ class MainWindow(QMainWindow):
             pass
 
         self.bottom_table = QTableView()
-        self.bottom_model = TracksTableModel(tolerance_settings=self.tolerance_settings)
+        self.bottom_model = TracksTableModel(tolerance_settings=self.tolerance_settings, theme_settings=self.theme_settings)
         self.bottom_table.setModel(self.bottom_model)
 
         splitter.addWidget(self.top_table)

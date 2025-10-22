@@ -44,7 +44,7 @@ QTableView {
    alternate-background-color: #FAFBFD;
 }
 QTableView::item {
-   padding: 6px;
+    padding: 4px;
 }
 QHeaderView::section {
    background-color: #173A7A;
@@ -74,11 +74,11 @@ QWidget#Main {
 }
 
 QToolBar#MainToolbar {
-   background-color: #FFFFFF;
-   border: none;
-   border-bottom: 1px solid #D1D5DB;
-   padding: 8px 12px;
-   spacing: 12px;
+    background-color: #FFFFFF;
+    border: none;
+    border-bottom: 1px solid #D1D5DB;
+    padding: 8px 12px;
+    spacing: 16px;
 }
 
 QMainWindow[analysis-state="true"] QToolBar#MainToolbar {
@@ -110,12 +110,14 @@ QMainWindow[analysis-state="true"] QLabel#StatusLabel {
    font-weight: 500;
 }
 QProgressBar#ProgressBar {
-   border: none;
-   background-color: transparent;
-   max-height: 4px;
+    border: none;
+    background-color: #E5E7EB;
+    max-height: 4px;
+    border-radius: 2px;
 }
 QProgressBar#ProgressBar::chunk {
-   background-color: #2563EB;
+    background-color: #2563EB;
+    border-radius: 2px;
 }
 
 /* === Filter ComboBox === */

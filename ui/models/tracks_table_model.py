@@ -3,11 +3,12 @@ from __future__ import annotations
 from typing import Optional
 
 from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt
-from PyQt6.QtGui import QFont, QPalette
+from PyQt6.QtGui import QColor, QFont, QPalette
 from PyQt6.QtWidgets import QApplication
 
 from core.models.analysis import SideResult
 from core.models.settings import ToleranceSettings
+from ui.config_models import ThemeSettings
 from ui.constants import (
     LABEL_TOTAL_TRACKS,
     PLACEHOLDER_DASH,
@@ -22,9 +23,10 @@ from ui.theme import get_custom_icon
 class TracksTableModel(QAbstractTableModel):
     """Model for the bottom table showing track details."""
 
-    def __init__(self, tolerance_settings: ToleranceSettings):
+    def __init__(self, tolerance_settings: ToleranceSettings, theme_settings: ThemeSettings):
         super().__init__()
         self.tolerance_settings = tolerance_settings
+        self.theme_settings = theme_settings
         self._headers = TABLE_HEADERS_BOTTOM
         self._data: Optional[SideResult] = None
 
@@ -100,21 +102,7 @@ class TracksTableModel(QAbstractTableModel):
             return self.get_track_row_data(row, column)
 
         if role == Qt.ItemDataRole.BackgroundRole and is_total_row:
-            palette = QApplication.instance().palette()
-            try:
-                base = palette.color(QPalette.ColorRole.Window)
-                alternate = palette.color(QPalette.ColorRole.AlternateBase)
-            except AttributeError:
-                base = palette.color(QPalette.Base)
-                alternate = palette.color(QPalette.AlternateBase)
-
-            if alternate != base:
-                return alternate
-            try:
-                is_dark = base.lightness() < 128
-            except AttributeError:
-                is_dark = False
-            return base.darker(105) if is_dark else base.lighter(105)
+            return QColor(self.theme_settings.total_row_bg_color)
 
         if role == Qt.ItemDataRole.FontRole and is_total_row:
             font = QFont()

@@ -1,7 +1,7 @@
 from core.models.settings import ExportSettings, IdExtractionSettings, ToleranceSettings
 
 from .constants import *
-from .theme import get_system_file_icon, get_gz_color, load_gz_media_fonts, load_gz_media_stylesheet
+from .theme import get_system_file_icon, get_custom_icon, get_gz_color, load_gz_media_fonts, load_gz_media_stylesheet
 from .models.results_table_model import ResultsTableModel
 from .models.tracks_table_model import TracksTableModel
 from .workers.analysis_worker import AnalysisWorker
@@ -45,23 +45,19 @@ __all__ = [
     "SYMBOL_CHECK",
     "SYMBOL_CROSS",
     "PLACEHOLDER_DASH",
-    "SYMBOL_OPEN",
     "COLOR_WHITE",
     "LABEL_TOTAL_TRACKS",
     "STATUS_OK",
     "STATUS_WARN",
     "STATUS_FAIL",
     "INTERFACE_MAIN",
-    "COMMENT_SETUP_TOP_TABLE",
-    "COMMENT_SETUP_BOTTOM_TABLE",
-    "COMMENT_MAX_WIDTH_WAV",
-    "COMMENT_APP_STARTUP",
-    "COMMENT_CONFIG_LOAD",
-    "COMMENT_CONFIG_ERROR",
-    "COMMENT_BUTTON_COLOR",
-    "COMMENT_BUTTON_COLOR_DESC",
+    # Icon constants
+    "ICON_CHECK",
+    "ICON_CROSS",
+    "ICON_PLAY",
     # Theme helpers
     "get_system_file_icon",
+    "get_custom_icon",
     "get_gz_color",
     "load_gz_media_fonts",
     "load_gz_media_stylesheet",
