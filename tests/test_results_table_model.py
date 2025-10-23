@@ -24,6 +24,7 @@ def theme_settings():
         claim_visible=True,
         claim_text="Emotions. Materialized.",
         action_bg_color="#E0E7FF",
+        total_row_bg_color="#F3F4F6",
     )
 
 
