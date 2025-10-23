@@ -22,7 +22,7 @@ def build_resources():
             text=True,
             check=True,
         )
-        print(f"✓ Successfully compiled {qrc_path} to {output_path}")
+        print(f"[SUCCESS] Successfully compiled {qrc_path} to {output_path}")
         print(result.stdout)
         return True
     except FileNotFoundError:
@@ -56,7 +56,7 @@ qInitResources()
     with output_path.open('w', encoding='utf-8') as f:
         f.write(minimal_code)
     
-    print(f"✓ Generated fallback resource module at {output_path}")
+    print(f"[SUCCESS] Generated fallback resource module at {output_path}")
     return True
 
 if __name__ == "__main__":
