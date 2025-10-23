@@ -7,7 +7,9 @@ from core.models.settings import ToleranceSettings
 from core.ports import AudioModeDetector
 
 
-def detect_audio_mode(wavs: list[WavInfo], detector: AudioModeDetector) -> tuple[dict[str, str], dict[str, list[WavInfo]]]:
+def detect_audio_mode(
+    wavs: list[WavInfo], detector: AudioModeDetector
+) -> tuple[dict[str, str], dict[str, list[WavInfo]]]:
     """
     Vylepšená detekce stran/pořadí:
     strict z názvu → AI fallback (je-li k dispozici) → deterministické fallback,
@@ -25,10 +27,7 @@ def detect_audio_mode(wavs: list[WavInfo], detector: AudioModeDetector) -> tuple
     side_map = detector.detect(wavs)
     # Detector returns normalized results, so no need for separate normalization
 
-    modes: dict[str, str] = {
-        side: ('side' if len(items) == 1 else 'tracks')
-        for side, items in side_map.items()
-    }
+    modes: dict[str, str] = {side: ("side" if len(items) == 1 else "tracks") for side, items in side_map.items()}
     return modes, side_map
 
 
@@ -65,7 +64,7 @@ def compare_data(
             wav_tracks,
             key=lambda track: track.position if track.position is not None else 99,
         )
-        mode = modes.get(side, 'tracks')
+        mode = modes.get(side, "tracks")
 
         total_pdf_sec = sum(t.duration_sec for t in pdf_tracks)
         total_wav_sec = sum(w.duration_sec for w in wav_tracks)
@@ -77,17 +76,19 @@ def compare_data(
         elif abs(difference) > tolerance_warn:
             status = "WARN"
 
-        results.append(SideResult(
-            seq=0,  # Will be assigned by TopTableModel.add_result()
-            pdf_path=pair_info['pdf'],
-            zip_path=pair_info['zip'],
-            side=side,
-            mode=mode,
-            status=status,
-            pdf_tracks=pdf_tracks,
-            wav_tracks=sorted_wav_tracks,
-            total_pdf_sec=total_pdf_sec,
-            total_wav_sec=total_wav_sec,
-            total_difference=difference
-        ))
+        results.append(
+            SideResult(
+                seq=0,  # Will be assigned by TopTableModel.add_result()
+                pdf_path=pair_info["pdf"],
+                zip_path=pair_info["zip"],
+                side=side,
+                mode=mode,
+                status=status,
+                pdf_tracks=pdf_tracks,
+                wav_tracks=sorted_wav_tracks,
+                total_pdf_sec=total_pdf_sec,
+                total_wav_sec=total_wav_sec,
+                total_difference=difference,
+            )
+        )
     return results

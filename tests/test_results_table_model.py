@@ -9,7 +9,7 @@ from core.models.analysis import SideResult
 from ui.config_models import ThemeSettings
 from ui.constants import STATUS_WARN
 from ui.models.results_table_model import ResultsTableModel
- 
+
 pytestmark = pytest.mark.usefixtures("qtbot")
 
 

@@ -20,6 +20,7 @@ from typing import Optional, List, Dict, Tuple
 
 # --------------------------- Datový model ---------------------------
 
+
 @dataclass
 class WavInfo:
     filename: str
@@ -27,7 +28,9 @@ class WavInfo:
     side: Optional[str] = None
     position: Optional[int] = None
 
+
 # ---------------------- WAV načtení a délky ------------------------
+
 
 def _read_wav_duration(fileobj) -> float:
     with BufferedReader(fileobj) as buf:
@@ -35,6 +38,7 @@ def _read_wav_duration(fileobj) -> float:
             frames = w.getnframes()
             rate = w.getframerate()
             return 0.0 if rate <= 0 else frames / float(rate)
+
 
 def extract_wav_durations(zip_path: Path) -> List[WavInfo]:
     wavs: List[WavInfo] = []
@@ -54,7 +58,9 @@ def extract_wav_durations(zip_path: Path) -> List[WavInfo]:
         print(f"[ERROR] ZIP chyba '{zip_path}': {e}", file=sys.stderr)
     return wavs
 
+
 # -------------- Strict detekce side/position z názvu ---------------
+
 
 def strict_from_path(s: str) -> Tuple[Optional[str], Optional[int]]:
     name = Path(s).stem
@@ -83,7 +89,9 @@ def strict_from_path(s: str) -> Tuple[Optional[str], Optional[int]]:
 
     return side, pos
 
+
 # ------------------------- AI fallback (pokud je) -------------------
+
 
 def _load_ai_client():
     try:
@@ -107,6 +115,7 @@ def _load_ai_client():
             pass
     return None, None
 
+
 def ai_parse_batch(filenames: List[str]) -> Dict[str, Tuple[Optional[str], Optional[int]]]:
     client, model = _load_ai_client()
     if not client or not model or not filenames:
@@ -114,7 +123,7 @@ def ai_parse_batch(filenames: List[str]) -> Dict[str, Tuple[Optional[str], Optio
     system = (
         "You extract metadata from WAV filenames. "
         "For each filename, infer 'side' (letters only, like A,B,AA) and 'position' (1..99). "
-        "Return STRICT JSON object mapping filename -> {\"side\": str|null, \"position\": int|null}. No extra text."
+        'Return STRICT JSON object mapping filename -> {"side": str|null, "position": int|null}. No extra text.'
     )
     user = {"filenames": filenames}
     try:
@@ -122,7 +131,7 @@ def ai_parse_batch(filenames: List[str]) -> Dict[str, Tuple[Optional[str], Optio
             model=model,
             messages=[
                 {"role": "system", "content": system},
-                {"role": "user", "content": json.dumps(user, ensure_ascii=False)}
+                {"role": "user", "content": json.dumps(user, ensure_ascii=False)},
             ],
             temperature=0.0,
             response_format={"type": "json_object"},
@@ -146,6 +155,7 @@ def ai_parse_batch(filenames: List[str]) -> Dict[str, Tuple[Optional[str], Optio
         print(f"[WARN] AI fallback selhal: {e}", file=sys.stderr)
         return {}
 
+
 def merge_ai_results(wavs: List[WavInfo], ai_map: Dict[str, Tuple[Optional[str], Optional[int]]]) -> None:
     if not ai_map:
         return
@@ -157,7 +167,9 @@ def merge_ai_results(wavs: List[WavInfo], ai_map: Dict[str, Tuple[Optional[str],
             if w.position is None and p_ai is not None:
                 w.position = p_ai
 
+
 # ----------------------- Fallback a mapování stran ------------------
+
 
 def _fallback_assign_when_all_unknown(wavs: List[WavInfo]) -> None:
     if not wavs:
@@ -180,6 +192,7 @@ def _fallback_assign_when_all_unknown(wavs: List[WavInfo]) -> None:
         w.side = "A"
         if w.position is None:
             w.position = i
+
 
 def detect_audio_mode_with_ai(wavs: List[WavInfo]) -> Dict[str, List[WavInfo]]:
     if not wavs:
@@ -204,12 +217,15 @@ def detect_audio_mode_with_ai(wavs: List[WavInfo]) -> Dict[str, List[WavInfo]]:
         items.sort(key=lambda x: (999 if x.position is None else x.position, x.filename.lower()))
     return side_map
 
+
 # -------------------- Normalizace pozic (KONEČNĚ) -------------------
+
 
 def _renumber_sequential(items: List[WavInfo]) -> None:
     items.sort(key=lambda x: (x.position is None, x.filename.lower()))
     for i, w in enumerate(items, start=1):
         w.position = i
+
 
 def normalize_positions(side_map: Dict[str, List[WavInfo]]) -> None:
     for items in side_map.values():
@@ -229,11 +245,14 @@ def normalize_positions(side_map: Dict[str, List[WavInfo]]) -> None:
         else:
             items.sort(key=lambda x: (x.position, x.filename.lower()))
 
+
 # -------------------------- Export / JSON ---------------------------
+
 
 def _format_mmss(seconds: float) -> str:
     t = int(seconds)
     return f"{t // 60:02d}:{t % 60:02d}"
+
 
 def build_payload(zip_path: Path, side_map: Dict[str, List[WavInfo]]) -> List[dict]:
     album = zip_path.stem
@@ -241,23 +260,20 @@ def build_payload(zip_path: Path, side_map: Dict[str, List[WavInfo]]) -> List[di
     for side, wavs in side_map.items():
         if not wavs:
             continue
-        block = {
-            "source_type": "wav",
-            "path_id": f"{album}_Side_{side}",
-            "album": album,
-            "side": side,
-            "tracks": []
-        }
+        block = {"source_type": "wav", "path_id": f"{album}_Side_{side}", "album": album, "side": side, "tracks": []}
         for w in wavs:
-            block["tracks"].append({
-                "filename": w.filename,
-                "side": w.side,
-                "position": int(w.position) if isinstance(w.position, int) and w.position > 0 else 1,
-                "duration_seconds": round(w.duration_sec, 3),
-                "duration_formatted": _format_mmss(w.duration_sec),
-            })
+            block["tracks"].append(
+                {
+                    "filename": w.filename,
+                    "side": w.side,
+                    "position": int(w.position) if isinstance(w.position, int) and w.position > 0 else 1,
+                    "duration_seconds": round(w.duration_sec, 3),
+                    "duration_formatted": _format_mmss(w.duration_sec),
+                }
+            )
         out.append(block)
     return out
+
 
 def save_json_outputs(blocks: List[dict], out_dir: Path) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -270,11 +286,13 @@ def save_json_outputs(blocks: List[dict], out_dir: Path) -> None:
         except Exception as e:
             print(f"[ERROR] Nelze uložit {out_path}: {e}", file=sys.stderr)
 
+
 # ------------------------------- Main -------------------------------
+
 
 def main():
     if len(sys.argv) != 2:
-        print("Použití: python wav_extractor_wave.py \"C:\\cesta\\k\\masters\"", file=sys.stderr)
+        print('Použití: python wav_extractor_wave.py "C:\\cesta\\k\\masters"', file=sys.stderr)
         sys.exit(2)
 
     root_dir = Path(sys.argv[1])
@@ -291,6 +309,7 @@ def main():
         all_blocks.extend(blocks)
 
     save_json_outputs(all_blocks, Path("output"))
+
 
 if __name__ == "__main__":
     main()

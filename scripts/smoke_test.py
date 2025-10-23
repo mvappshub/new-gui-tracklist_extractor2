@@ -34,16 +34,15 @@ print(f"Found {len(pairs)} pair(s); {skipped} ambiguous skipped")
 
 all_results = []
 for i, (file_id, pair_info) in enumerate(pairs.items(), 1):
-    print(f"Processing {i}/{len(pairs)}: {pair_info['pdf'].name}")
-    pdf_data = extract_pdf_tracklist(pair_info['pdf'])
-    wav_data = wav_reader.read_wav_files(pair_info['zip'])
-    side_results = compare_data(pdf_data, wav_data, pair_info, tolerance_settings, audio_mode_detector)
+    print(f"Processing {i}/{len(pairs)}: {pair_info.pdf.name}")
+    pdf_data = extract_pdf_tracklist(pair_info.pdf)
+    wav_data = wav_reader.read_wav_files(pair_info.zip)
+    pair_info_dict = {"pdf": pair_info.pdf, "zip": pair_info.zip}
+    side_results = compare_data(pdf_data, wav_data, pair_info_dict, tolerance_settings, audio_mode_detector)
     all_results.extend(side_results)
 
 print(f"Side results: {len(all_results)}")
-# Print brief summary
 status_counts = Counter(r.status for r in all_results)
 print("Status counts:", dict(status_counts))
 
-# Exit code 0 if at least one result, else 1
 sys.exit(0 if all_results else 1)

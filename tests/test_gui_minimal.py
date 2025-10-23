@@ -3,10 +3,12 @@
 
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from PyQt6.QtWidgets import QApplication
 from config import load_config
+
 
 def test_gui_minimal():
     """Test minimal GUI initialization."""
@@ -23,6 +25,7 @@ def test_gui_minimal():
 
         # Try to import MainWindow class
         from fluent_gui import MainWindow
+
         print("MainWindow imported successfully")
 
         # Try to create MainWindow instance (this is where it might crash)
@@ -39,8 +42,10 @@ def test_gui_minimal():
     except Exception as e:
         print(f"GUI initialization error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     success = test_gui_minimal()

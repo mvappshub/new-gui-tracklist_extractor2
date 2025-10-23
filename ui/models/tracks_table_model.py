@@ -34,6 +34,7 @@ class TracksTableModel(QAbstractTableModel):
         if theme_settings is None:
             from config import cfg
             from ui.config_models import load_theme_settings
+
             self.theme_settings = load_theme_settings(cfg)
         else:
             self.theme_settings = theme_settings
@@ -80,19 +81,19 @@ class TracksTableModel(QAbstractTableModel):
 
                     # Return check or cross icon based on tolerance
                     if abs(difference) <= track_tolerance:
-                        return get_custom_icon('check')
+                        return get_custom_icon("check")
                     else:
-                        return get_custom_icon('cross')
+                        return get_custom_icon("cross")
                 else:
-                    return get_custom_icon('cross')
+                    return get_custom_icon("cross")
             return None
 
         # Column 6 (Match) - Total row icon
         if role == Qt.ItemDataRole.DecorationRole and column == 6 and is_total_row:
             if self._data.status == STATUS_OK:
-                return get_custom_icon('check')
+                return get_custom_icon("check")
             else:
-                return get_custom_icon('cross')
+                return get_custom_icon("cross")
 
         # Column 7 (Waveform) - Icon rendering
         if role == Qt.ItemDataRole.DecorationRole and column == 7 and not is_total_row:
@@ -102,7 +103,7 @@ class TracksTableModel(QAbstractTableModel):
             else:
                 wav_track_exists = bool(self._data.wav_tracks)
             if wav_track_exists:
-                return get_custom_icon('play')
+                return get_custom_icon("play")
 
         if role in (Qt.ItemDataRole.AccessibleTextRole, Qt.ItemDataRole.ToolTipRole) and column == 6:
             if is_total_row:
@@ -118,7 +119,7 @@ class TracksTableModel(QAbstractTableModel):
                             track_tolerance = float(self.tolerance_settings.warn_tolerance)
                         except (TypeError, ValueError):
                             track_tolerance = 2.0
-                        
+
                         if abs(difference) <= track_tolerance:
                             return "Match OK"
                     return "No match"

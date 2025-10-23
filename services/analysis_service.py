@@ -7,7 +7,6 @@ from typing import Callable
 from adapters.audio.wav_reader import ZipWavFileReader
 from adapters.filesystem.file_discovery import discover_and_pair_files
 from core.domain.comparison import compare_data
-from core.domain.extraction import WavReader
 from core.models.settings import IdExtractionSettings, ToleranceSettings
 from core.ports import AudioModeDetector
 from pdf_extractor import extract_pdf_tracklist
@@ -25,7 +24,7 @@ class AnalysisService:
         self,
         tolerance_settings: ToleranceSettings,
         id_extraction_settings: IdExtractionSettings,
-        wav_reader: WavReader | None = None,
+        wav_reader: ZipWavFileReader | None = None,
         audio_mode_detector: AudioModeDetector | None = None,
     ) -> None:
         self._tolerance_settings = tolerance_settings
@@ -45,7 +44,6 @@ class AnalysisService:
         finished_callback: Callable[[str], None],
     ) -> None:
         try:
-            # Scanning and pairing
             progress_callback("Scanning and pairing files...")
             pairs, skipped_count = discover_and_pair_files(
                 pdf_dir, wav_dir, self._id_extraction_settings
@@ -60,34 +58,32 @@ class AnalysisService:
             for i, (file_id, pair_info) in enumerate(pairs.items()):
                 try:
                     progress_callback(
-                        f"Processing pair {i+1}/{total_pairs}: {pair_info['pdf'].name}"
+                        f"Processing pair {i+1}/{total_pairs}: {pair_info.pdf.name}"
                     )
 
-                    # PDF + WAV domain extraction
-                    pdf_data = extract_pdf_tracklist(pair_info["pdf"])
-                    wav_data = self._wav_reader.read_wav_files(pair_info["zip"])
+                    pdf_data = extract_pdf_tracklist(pair_info.pdf)
+                    wav_data = self._wav_reader.read_wav_files(pair_info.zip)
 
-                    # Domain comparison
+                    pair_info_dict = {"pdf": pair_info.pdf, "zip": pair_info.zip}
                     side_results = compare_data(
                         pdf_data,
                         wav_data,
-                        pair_info,
+                        pair_info_dict,
                         self._tolerance_settings,
                         self._audio_mode_detector,
                     )
 
-                    # Emit results
                     for res in side_results:
                         result_callback(res)
 
                     processed_count += 1
                 except Exception as pair_error:
                     logging.error(
-                        f"Failed to process pair {pair_info['pdf'].name}: {pair_error}",
+                        f"Failed to process pair {pair_info.pdf.name}: {pair_error}",
                         exc_info=True,
                     )
                     progress_callback(
-                        f"⚠️ WARN: Skipping pair {pair_info['pdf'].name} due to error."
+                        f"⚠️ WARN: Skipping pair {pair_info.pdf.name} due to error."
                     )
                     continue
 

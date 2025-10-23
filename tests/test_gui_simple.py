@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 
 pytestmark = pytest.mark.gui
 
+
 def test_basic_gui():
     """Test basic PyQt6 GUI functionality."""
     app = QApplication(sys.argv)
@@ -27,6 +28,7 @@ def test_basic_gui():
     print("GUI launched successfully!")
     QTimer.singleShot(1000, app.quit)
     return app.exec()
+
 
 if __name__ == "__main__":
     sys.exit(test_basic_gui())

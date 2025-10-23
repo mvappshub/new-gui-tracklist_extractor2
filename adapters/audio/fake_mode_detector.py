@@ -6,7 +6,7 @@ No external API calls - guarantees consistent results for same inputs.
 
 from __future__ import annotations
 
-from core.domain.parsing import StrictFilenameParser, UNKNOWN_POSITION
+from core.domain.parsing import UNKNOWN_POSITION, StrictFilenameParser
 from core.models.analysis import WavInfo
 from core.ports import AudioModeDetector
 
@@ -18,7 +18,7 @@ class FakeAudioModeDetector(AudioModeDetector):
     Guarantees consistent results for same inputs.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._parser = StrictFilenameParser()
 
     def detect(self, wavs: list[WavInfo]) -> dict[str, list[WavInfo]]:
@@ -40,12 +40,14 @@ class FakeAudioModeDetector(AudioModeDetector):
         parsed_wavs = []
         for wav in wavs:
             parsed_info = self._parser.parse(wav.filename)
-            parsed_wavs.append(WavInfo(
-                filename=wav.filename,
-                duration_sec=wav.duration_sec,
-                side=parsed_info.side,
-                position=parsed_info.position
-            ))
+            parsed_wavs.append(
+                WavInfo(
+                    filename=wav.filename,
+                    duration_sec=wav.duration_sec,
+                    side=parsed_info.side,
+                    position=parsed_info.position,
+                )
+            )
 
         side_map: dict[str, list[WavInfo]] = {}
         for wav in parsed_wavs:
@@ -53,7 +55,9 @@ class FakeAudioModeDetector(AudioModeDetector):
             side_map.setdefault(side, []).append(wav)
 
         for wav_list in side_map.values():
-            wav_list.sort(key=lambda x: (x.position if x.position is not None else UNKNOWN_POSITION, x.filename.lower()))
+            wav_list.sort(
+                key=lambda x: (x.position if x.position is not None else UNKNOWN_POSITION, x.filename.lower())
+            )
 
         self._normalize_positions(side_map)
 
@@ -65,7 +69,9 @@ class FakeAudioModeDetector(AudioModeDetector):
             if not wav_list:
                 continue
 
-            wav_list.sort(key=lambda x: (x.position if x.position is not None else UNKNOWN_POSITION, x.filename.lower()))
+            wav_list.sort(
+                key=lambda x: (x.position if x.position is not None else UNKNOWN_POSITION, x.filename.lower())
+            )
 
             actual = [w.position for w in wav_list]
             expected = list(range(1, len(wav_list) + 1))

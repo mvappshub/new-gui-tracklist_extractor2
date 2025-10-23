@@ -3,9 +3,11 @@
 
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from config import cfg
+
 
 def test_config():
     """Test configuration system functionality."""
@@ -27,6 +29,7 @@ def test_config():
     except Exception as e:
         print(f"Configuration error: {e}")
         return False
+
 
 if __name__ == "__main__":
     success = test_config()

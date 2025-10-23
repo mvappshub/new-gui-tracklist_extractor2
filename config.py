@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -157,8 +155,8 @@ class AppConfig:
         # Prompts Configuration
         self._defaults["prompts/primary"] = (
             "You are a tracklist extractor. Your single purpose is to return STRICT JSON.\n"
-            "Schema: { \"tracks\": [ {\"title\": string, \"side\": string, \"position\": integer, "
-            "\"duration_seconds\": integer, \"duration_formatted\": \"MM:SS\" } ] }.\n"
+            'Schema: { "tracks": [ {"title": string, "side": string, "position": integer, '
+            '"duration_seconds": integer, "duration_formatted": "MM:SS" } ] }.\n'
             "Your entire logic is governed by this unbreakable rule:\n"
             "A track is anchored by its duration value (e.g., 4:40, 5m10s). The title is ALL meaningful text visually "
             "associated with that single time value. Combine multi-line text into one title.\n"
@@ -236,7 +234,7 @@ class AppConfig:
         self._defaults["gz_brand/light_gray"] = "#757575"
         self._defaults["gz_brand/gray"] = "#6B7280"
         self._defaults["gz_brand/logo_path"] = "assets/gz_logo_white.png"
-        
+
         self._defaults["gz_brand/claim_visible"] = True
 
         # Status Colors
@@ -263,10 +261,12 @@ class AppConfig:
                 return default
             # Convert string representations back to appropriate types
             if isinstance(default, bool) and isinstance(value, str):
-                return value.lower() in ('true', '1', 'yes', 'on')
+                return value.lower() in ("true", "1", "yes", "on")
 
             # Determine if value looks like a JSON list even when default is None
-            is_json_like_string = isinstance(value, str) and value.strip().startswith('[') and value.strip().endswith(']')
+            is_json_like_string = (
+                isinstance(value, str) and value.strip().startswith("[") and value.strip().endswith("]")
+            )
             if (isinstance(default, list) or (default is None and is_json_like_string)) and isinstance(value, str):
                 try:
                     return json.loads(value)
@@ -335,7 +335,7 @@ class AppConfig:
         file_path = Path(file_path)
         if file_path.exists():
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     for key, value in data.items():
                         self.set(key, value)
@@ -685,5 +685,5 @@ def save_config(file_path: Union[str, Path]) -> None:
         config_data[key] = cfg.get(key)
 
     file_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(file_path, 'w', encoding='utf-8') as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         json.dump(config_data, f, indent=2, ensure_ascii=False)

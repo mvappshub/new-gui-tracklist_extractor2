@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 
@@ -78,9 +76,16 @@ class FolderSettingCard(QWidget):
         layout.addLayout(controls_layout)
 
         # Set initial path
-        self.set_path(cfg.get("input/pdf_dir") if config_item == cfg.input_pdf_dir else
-                    cfg.get("input/wav_dir") if config_item == cfg.input_wav_dir else
-                    cfg.get("export/default_dir") if config_item == cfg.export_default_dir else "", update_config=False)
+        self.set_path(
+            cfg.get("input/pdf_dir")
+            if config_item == cfg.input_pdf_dir
+            else cfg.get("input/wav_dir")
+            if config_item == cfg.input_wav_dir
+            else cfg.get("export/default_dir")
+            if config_item == cfg.export_default_dir
+            else "",
+            update_config=False,
+        )
 
     def set_path(self, path: str, update_config: bool = True) -> None:
         normalized = path or ""
@@ -161,7 +166,7 @@ class SettingsPage(QWidget):
         self.scale_combo = QComboBox()
         self.scale_combo.addItems(["100%", "125%", "150%", "175%", "200%", "Follow system"])
         # Set current value
-        current_scale = cfg.ui_dpi_scale.value if hasattr(cfg.ui_dpi_scale, 'value') else cfg.ui_dpi_scale or "AUTO"
+        current_scale = cfg.ui_dpi_scale.value if hasattr(cfg.ui_dpi_scale, "value") else cfg.ui_dpi_scale or "AUTO"
         scale_index = self.scale_combo.findText(current_scale)
         if scale_index >= 0:
             self.scale_combo.setCurrentIndex(scale_index)
@@ -277,7 +282,9 @@ class SettingsPage(QWidget):
         self.model_combo.addItems(model_options)
 
         # Set current value
-        current_model = cfg.llm_model.value if hasattr(cfg.llm_model, 'value') else cfg.llm_model or "google/gemini-2.5-flash"
+        current_model = (
+            cfg.llm_model.value if hasattr(cfg.llm_model, "value") else cfg.llm_model or "google/gemini-2.5-flash"
+        )
         model_index = self.model_combo.findText(current_model)
         if model_index >= 0:
             self.model_combo.setCurrentIndex(model_index)
@@ -332,7 +339,11 @@ class SettingsPage(QWidget):
         self.warn_slider = QSlider(Qt.Orientation.Horizontal)
         self.warn_slider.setMinimum(1)
         self.warn_slider.setMaximum(10)
-        warn_value = cfg.analysis_tolerance_warn.value if hasattr(cfg.analysis_tolerance_warn, 'value') else cfg.analysis_tolerance_warn or 2
+        warn_value = (
+            cfg.analysis_tolerance_warn.value
+            if hasattr(cfg.analysis_tolerance_warn, "value")
+            else cfg.analysis_tolerance_warn or 2
+        )
         self.warn_slider.setValue(warn_value)
         self.warn_slider.setFixedWidth(200)
         warn_layout.addWidget(self.warn_slider)
@@ -355,7 +366,11 @@ class SettingsPage(QWidget):
         self.fail_slider = QSlider(Qt.Orientation.Horizontal)
         self.fail_slider.setMinimum(1)
         self.fail_slider.setMaximum(20)
-        fail_value = cfg.analysis_tolerance_fail.value if hasattr(cfg.analysis_tolerance_fail, 'value') else cfg.analysis_tolerance_fail or 5
+        fail_value = (
+            cfg.analysis_tolerance_fail.value
+            if hasattr(cfg.analysis_tolerance_fail, "value")
+            else cfg.analysis_tolerance_fail or 5
+        )
         self.fail_slider.setValue(fail_value)
         self.fail_slider.setFixedWidth(200)
         fail_layout.addWidget(self.fail_slider)
@@ -395,7 +410,6 @@ class SettingsPage(QWidget):
 
         self.container_layout.addWidget(group)
 
-
     def _on_scale_changed(self, value: str) -> None:
         """Handle UI scale changes."""
         cfg.set("ui/dpi_scale", value)
@@ -429,6 +443,7 @@ class SettingsPage(QWidget):
     def _save_settings(self) -> None:
         try:
             from fluent_gui import SETTINGS_FILENAME
+
             save_config(SETTINGS_FILENAME)
             self._show_message("Settings saved", "Configuration saved successfully.", "info")
         except Exception as error:  # pragma: no cover - UI feedback path
@@ -449,7 +464,7 @@ class SettingsPage(QWidget):
             "Reset settings",
             "This will restore all settings to their default values.",
             QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
+            QMessageBox.No,
         )
 
         if reply != QMessageBox.Yes:
@@ -457,6 +472,7 @@ class SettingsPage(QWidget):
 
         cfg.reset_to_defaults()
         from fluent_gui import SETTINGS_FILENAME
+
         save_config(SETTINGS_FILENAME)
 
         try:
@@ -470,55 +486,73 @@ class SettingsPage(QWidget):
         self._reenable_widgets()
 
     def _reenable_widgets(self) -> None:
-        scroll = getattr(self, 'scroll', None)
+        scroll = getattr(self, "scroll", None)
         if scroll is not None:
             scroll.setEnabled(True)
             viewport = scroll.viewport()
             if viewport is not None:
                 viewport.setEnabled(True)
-        container = getattr(self, 'container', None)
+        container = getattr(self, "container", None)
         if container is not None:
             container.setEnabled(True)
 
     def _sync_from_config(self) -> None:
         # Update folder cards
-        if hasattr(self, 'pdf_dir_card'):
-            pdf_value = cfg.input_pdf_dir.value if hasattr(cfg.input_pdf_dir, 'value') else cfg.input_pdf_dir or "./data/pdf"
+        if hasattr(self, "pdf_dir_card"):
+            pdf_value = (
+                cfg.input_pdf_dir.value if hasattr(cfg.input_pdf_dir, "value") else cfg.input_pdf_dir or "./data/pdf"
+            )
             self.pdf_dir_card.set_path(self._coerce_folder(pdf_value), update_config=False)
 
-        if hasattr(self, 'wav_dir_card'):
-            wav_value = cfg.input_wav_dir.value if hasattr(cfg.input_wav_dir, 'value') else cfg.input_wav_dir or "./data/wav"
+        if hasattr(self, "wav_dir_card"):
+            wav_value = (
+                cfg.input_wav_dir.value if hasattr(cfg.input_wav_dir, "value") else cfg.input_wav_dir or "./data/wav"
+            )
             self.wav_dir_card.set_path(self._coerce_folder(wav_value), update_config=False)
 
-        if hasattr(self, 'export_dir_card'):
-            export_value = cfg.export_default_dir.value if hasattr(cfg.export_default_dir, 'value') else cfg.export_default_dir or "exports"
+        if hasattr(self, "export_dir_card"):
+            export_value = (
+                cfg.export_default_dir.value
+                if hasattr(cfg.export_default_dir, "value")
+                else cfg.export_default_dir or "exports"
+            )
             self.export_dir_card.set_path(self._coerce_folder(export_value), update_config=False)
 
         # Update combo boxes
-        if hasattr(self, 'scale_combo'):
-            scale_value = cfg.ui_dpi_scale.value if hasattr(cfg.ui_dpi_scale, 'value') else cfg.ui_dpi_scale or "AUTO"
+        if hasattr(self, "scale_combo"):
+            scale_value = cfg.ui_dpi_scale.value if hasattr(cfg.ui_dpi_scale, "value") else cfg.ui_dpi_scale or "AUTO"
             scale_index = self.scale_combo.findText(scale_value)
             if scale_index >= 0:
                 self.scale_combo.setCurrentIndex(scale_index)
 
-        if hasattr(self, 'model_combo'):
-            model_value = cfg.llm_model.value if hasattr(cfg.llm_model, 'value') else cfg.llm_model or "google/gemini-2.5-flash"
+        if hasattr(self, "model_combo"):
+            model_value = (
+                cfg.llm_model.value if hasattr(cfg.llm_model, "value") else cfg.llm_model or "google/gemini-2.5-flash"
+            )
             model_index = self.model_combo.findText(model_value)
             if model_index >= 0:
                 self.model_combo.setCurrentIndex(model_index)
 
         # Update sliders
-        if hasattr(self, 'warn_slider'):
-            warn_value = cfg.analysis_tolerance_warn.value if hasattr(cfg.analysis_tolerance_warn, 'value') else cfg.analysis_tolerance_warn or 2
+        if hasattr(self, "warn_slider"):
+            warn_value = (
+                cfg.analysis_tolerance_warn.value
+                if hasattr(cfg.analysis_tolerance_warn, "value")
+                else cfg.analysis_tolerance_warn or 2
+            )
             self.warn_slider.setValue(warn_value)
             self.warn_value_label.setText(f"{warn_value}s")
 
-        if hasattr(self, 'fail_slider'):
-            fail_value = cfg.analysis_tolerance_fail.value if hasattr(cfg.analysis_tolerance_fail, 'value') else cfg.analysis_tolerance_fail or 5
+        if hasattr(self, "fail_slider"):
+            fail_value = (
+                cfg.analysis_tolerance_fail.value
+                if hasattr(cfg.analysis_tolerance_fail, "value")
+                else cfg.analysis_tolerance_fail or 5
+            )
             self.fail_slider.setValue(fail_value)
             self.fail_value_label.setText(f"{fail_value}s")
 
-        if hasattr(self, 'downsample_slider'):
+        if hasattr(self, "downsample_slider"):
             downsample_value = (
                 cfg.waveform_downsample_factor.value
                 if hasattr(cfg.waveform_downsample_factor, "value")
@@ -529,7 +563,7 @@ class SettingsPage(QWidget):
             if hasattr(self, "downsample_value_label"):
                 self.downsample_value_label.setText(f"{downsample_value}x")
 
-        if hasattr(self, 'volume_slider'):
+        if hasattr(self, "volume_slider"):
             volume_value = (
                 cfg.waveform_default_volume.value
                 if hasattr(cfg.waveform_default_volume, "value")
@@ -551,7 +585,6 @@ class SettingsPage(QWidget):
         if isinstance(value, list):
             return value.copy()
         return value
-
 
     def _show_message(self, title: str, content: str, message_type: str = "info") -> None:
         if message_type == "error":

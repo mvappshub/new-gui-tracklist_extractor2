@@ -24,8 +24,8 @@ class TestAiAudioModeDetector:
         ]
 
         # Mock the external API calls
-        with patch('adapters.audio.ai_mode_detector.detect_audio_mode_with_ai') as mock_detect:
-            with patch('adapters.audio.ai_mode_detector.normalize_positions') as mock_normalize:
+        with patch("adapters.audio.ai_mode_detector.detect_audio_mode_with_ai") as mock_detect:
+            with patch("adapters.audio.ai_mode_detector.normalize_positions") as mock_normalize:
                 mock_detect.return_value = {
                     "A": [
                         WavInfo(filename="Side_A_01_intro.wav", duration_sec=120.0, side="A", position=1),
@@ -61,8 +61,8 @@ class TestAiAudioModeDetector:
             WavInfo(filename="track3.wav", duration_sec=210.0),
         ]
 
-        with patch('adapters.audio.ai_mode_detector.detect_audio_mode_with_ai') as mock_detect:
-            with patch('adapters.audio.ai_mode_detector.normalize_positions') as mock_normalize:
+        with patch("adapters.audio.ai_mode_detector.detect_audio_mode_with_ai") as mock_detect:
+            with patch("adapters.audio.ai_mode_detector.normalize_positions") as mock_normalize:
                 mock_detect.return_value = {
                     "A": [
                         WavInfo(filename="track1.wav", duration_sec=120.0, side="A", position=1),

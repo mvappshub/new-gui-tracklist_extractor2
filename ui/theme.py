@@ -13,7 +13,7 @@ _icon_cache: Dict[str, QIcon] = {}
 
 def get_asset_path(relative_path: Path) -> Path:
     """Get absolute path to asset, supporting both development and bundled app (PyInstaller)."""
-    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         # Running in a PyInstaller bundle
         base_path = Path(sys._MEIPASS)
     else:
@@ -94,7 +94,7 @@ def _get_fallback_icon(icon_name: str) -> QIcon:
 def get_system_file_icon(icon_type: str = "file") -> QIcon:
     """Return a standard system icon for files, directories, or actions, with support for custom SVG icons."""
     # Support custom SVG icons for specific types
-    if icon_type in ['check', 'cross', 'play']:
+    if icon_type in ["check", "cross", "play"]:
         return get_custom_icon(icon_type)
 
     # Fallback to system icons for backward compatibility

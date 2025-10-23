@@ -53,6 +53,7 @@ class WaveformSettings:
     position_line_color: str
     downsample_factor: int
 
+
 def load_tolerance_settings(cfg: AppConfig) -> ToleranceSettings:
     return ToleranceSettings(
         warn_tolerance=cfg.analysis_tolerance_warn.value,
@@ -127,7 +128,7 @@ def load_theme_settings(cfg: AppConfig) -> ThemeSettings:
     action_color_attr = getattr(cfg, "ui_table_action_bg_color", None)
     action_bg_color = getattr(action_color_attr, "value", "#E0E7FF")
 
-    total_row_bg_color = cfg.get('ui/total_row_bg_color', '#F3F4F6')
+    total_row_bg_color = cfg.get("ui/total_row_bg_color", "#F3F4F6")
 
     return ThemeSettings(
         font_family=cfg.ui_base_font_family.value,
@@ -188,12 +189,8 @@ def load_waveform_settings(cfg: AppConfig) -> WaveformSettings:
     )
     enable_snapping = bool(_get_with_default("waveform_editor/enable_snapping", True))
     default_volume = _to_float(getattr(cfg.waveform_default_volume, "value", 0.5), 0.5)
-    waveform_color = str(
-        _get_with_default("waveform/waveform_color", "#3B82F6") or "#3B82F6"
-    )
-    position_line_color = str(
-        _get_with_default("waveform/position_line_color", "#EF4444") or "#EF4444"
-    )
+    waveform_color = str(_get_with_default("waveform/waveform_color", "#3B82F6") or "#3B82F6")
+    position_line_color = str(_get_with_default("waveform/position_line_color", "#EF4444") or "#EF4444")
     downsample_factor = _to_int(
         getattr(cfg.waveform_downsample_factor, "value", 10),
         default=10,

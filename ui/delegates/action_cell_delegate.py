@@ -11,18 +11,18 @@ from PyQt6.QtWidgets import QAbstractItemView, QStyledItemDelegate, QStyle
 
 def _darken_color(color: str, factor: float = 0.15) -> QColor:
     """Darken a hex color by a given factor (0.0 to 1.0).
-    
+
     Args:
         color: Hex color string (e.g., '#E0E7FF')
         factor: Darkening factor (0.0-1.0, where 1.0 is black)
-    
+
     Returns:
         QColor object
     """
     qcolor = QColor(color)
     if not qcolor.isValid():
         return QColor(color)
-    
+
     # Reduce lightness by factor
     h, s, v, a = qcolor.getHsv()
     if v > 0:
@@ -33,7 +33,7 @@ def _darken_color(color: str, factor: float = 0.15) -> QColor:
 
 class ActionCellDelegate(QStyledItemDelegate):
     """Delegate that renders a subtle hover tint on action cells in specified columns.
-    
+
     This delegate checks if a cell is in a configured action column and if the mouse
     is hovering over it. If so, it draws a slightly darker background tint before
     rendering the normal content.
@@ -41,7 +41,7 @@ class ActionCellDelegate(QStyledItemDelegate):
 
     def __init__(self, theme_settings, action_columns: Set[int] | list[int]):
         """Initialize the delegate.
-        
+
         Args:
             theme_settings: ThemeSettings object with action_bg_color
             action_columns: Set or list of column indices that are action cells
@@ -58,7 +58,7 @@ class ActionCellDelegate(QStyledItemDelegate):
         index,
     ) -> None:
         """Paint the cell with hover affordance if applicable.
-        
+
         Args:
             painter: QPainter for drawing
             option: QStyleOptionViewItem with styling info
@@ -91,7 +91,7 @@ class ActionCellDelegate(QStyledItemDelegate):
 
     def set_hovered_index(self, index: QModelIndex | None) -> None:
         """Set the currently hovered cell index.
-        
+
         Args:
             index: QModelIndex of the hovered cell, or None if no cell is hovered
         """

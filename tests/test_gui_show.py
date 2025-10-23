@@ -3,10 +3,12 @@
 
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from PyQt6.QtWidgets import QApplication
 from config import load_config
+
 
 def test_gui_show():
     """Test GUI show functionality."""
@@ -23,6 +25,7 @@ def test_gui_show():
 
         # Import and create MainWindow
         from fluent_gui import MainWindow
+
         print("MainWindow imported successfully")
 
         print("Creating MainWindow instance...")
@@ -41,8 +44,10 @@ def test_gui_show():
     except Exception as e:
         print(f"GUI show error: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(test_gui_show())

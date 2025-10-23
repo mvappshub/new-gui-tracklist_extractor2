@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -32,11 +33,10 @@ class SideResult(BaseModel):
     total_wav_sec: float
     total_difference: int
 
-from dataclasses import dataclass
-
 
 @dataclass
 class FilePair:
     """Represents a paired PDF and ZIP file based on a shared numeric ID."""
+
     pdf: Path
     zip: Path

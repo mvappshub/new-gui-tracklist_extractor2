@@ -93,9 +93,7 @@ class TestWaveformEditorDialog:
     def test_multimedia_unavailable(self, monkeypatch, mock_wav_zip, waveform_settings):
         zip_path, wav_name = mock_wav_zip
         monkeypatch.setattr(waveform_viewer, "_MULTIMEDIA_AVAILABLE", False)
-        monkeypatch.setattr(
-            waveform_viewer, "_MULTIMEDIA_IMPORT_ERROR", ImportError("missing Qt multimedia")
-        )
+        monkeypatch.setattr(waveform_viewer, "_MULTIMEDIA_IMPORT_ERROR", ImportError("missing Qt multimedia"))
         with mock.patch.object(QMessageBox, "critical") as critical:
             with pytest.raises(RuntimeError):
                 WaveformEditorDialog(zip_path, wav_name, waveform_settings)
@@ -145,16 +143,12 @@ class TestWaveformEditorDialog:
         assert (updated_region[1] - updated_region[0]) >= editor_dialog._min_region_duration
 
     def test_find_rms_peaks_returns_values(self, editor_dialog):
-        peaks = editor_dialog._find_rms_peaks(
-            0.0, editor_dialog._duration_sec, editor_dialog._snap_tolerance
-        )
+        peaks = editor_dialog._find_rms_peaks(0.0, editor_dialog._duration_sec, editor_dialog._snap_tolerance)
         assert isinstance(peaks, list)
         assert all(isinstance(p, float) for p in peaks)
 
     def test_find_zero_crossings_returns_values(self, editor_dialog):
-        crossings = editor_dialog._find_zero_crossings(
-            0.0, editor_dialog._duration_sec, editor_dialog._snap_tolerance
-        )
+        crossings = editor_dialog._find_zero_crossings(0.0, editor_dialog._duration_sec, editor_dialog._snap_tolerance)
         assert isinstance(crossings, list)
         assert all(isinstance(c, float) for c in crossings)
         assert len(crossings) > 0
@@ -198,15 +192,11 @@ class TestWaveformEditorDialog:
         editor_dialog._fit_to_region()
         fitted_range = editor_dialog.plot_widget.viewRange()[0]
         region_duration = editor_dialog._region_bounds[1] - editor_dialog._region_bounds[0]
-        assert pytest.approx(fitted_range[1] - fitted_range[0], rel=1e-2) == pytest.approx(
-            region_duration, rel=1e-2
-        )
+        assert pytest.approx(fitted_range[1] - fitted_range[0], rel=1e-2) == pytest.approx(region_duration, rel=1e-2)
         editor_dialog._fit_all()
         fit_all_range = editor_dialog.plot_widget.viewRange()[0]
         assert pytest.approx(fit_all_range[0], rel=1e-3) == pytest.approx(0.0, rel=1e-3)
-        assert pytest.approx(fit_all_range[1], rel=1e-3) == pytest.approx(
-            editor_dialog._duration_sec, rel=1e-3
-        )
+        assert pytest.approx(fit_all_range[1], rel=1e-3) == pytest.approx(editor_dialog._duration_sec, rel=1e-3)
 
     def test_playback_controls_trigger_player(self, editor_dialog, qtbot):
         with mock.patch.object(editor_dialog._player, "play") as play_mock:

@@ -130,9 +130,10 @@ class TestWaveformViewerDialog:
             self._temp_wav = fake_wav
 
         mono = np.linspace(-1, 1, 1000, dtype=np.float32)
-        with mock.patch.object(waveform_viewer, "sf") as mock_sf, mock.patch.object(
-            waveform_viewer.pg.PlotDataItem, "setData", autospec=True
-        ) as set_data:
+        with (
+            mock.patch.object(waveform_viewer, "sf") as mock_sf,
+            mock.patch.object(waveform_viewer.pg.PlotDataItem, "setData", autospec=True) as set_data,
+        ):
             mock_sf.read.return_value = (mono, 100)
             monkeypatch.setattr(WaveformViewerDialog, "_extract_wav", fake_extract, raising=False)
             dialog = WaveformViewerDialog(
@@ -175,9 +176,10 @@ class TestWaveformViewerDialog:
             self._temp_wav = fake
 
         mono = np.linspace(-1, 1, 4000, dtype=np.float32)
-        with mock.patch.object(waveform_viewer, "sf") as mock_sf, mock.patch.object(
-            waveform_viewer.pg.PlotDataItem, "setData", autospec=True
-        ) as set_data:
+        with (
+            mock.patch.object(waveform_viewer, "sf") as mock_sf,
+            mock.patch.object(waveform_viewer.pg.PlotDataItem, "setData", autospec=True) as set_data,
+        ):
             mock_sf.read.return_value = (mono, 400)
             monkeypatch.setattr(WaveformViewerDialog, "_extract_wav", fake_extract, raising=False)
             WaveformViewerDialog(

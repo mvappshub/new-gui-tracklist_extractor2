@@ -150,9 +150,7 @@ def test_read_wav_files_duration_extraction_failure(
     assert any("Nelze přečíst hlavičku WAV" in message for message in caplog.messages)
 
 
-def test_read_wav_files_duplicate_basenames(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_read_wav_files_duplicate_basenames(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     entries = {
         "sideB/track.wav": b"two",
         "sideA/track.wav": b"one",

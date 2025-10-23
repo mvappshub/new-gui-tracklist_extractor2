@@ -38,15 +38,11 @@ class TestExportAuto:
             side="A",
             mode="side",
             status="OK",
-            pdf_tracks=[
-                TrackInfo(title=f"Track {seq}", side="A", position=1, duration_sec=180)
-            ],
-            wav_tracks=[
-                WavInfo(filename=f"track_{seq}.wav", duration_sec=180.0, side="A", position=1)
-            ],
+            pdf_tracks=[TrackInfo(title=f"Track {seq}", side="A", position=1, duration_sec=180)],
+            wav_tracks=[WavInfo(filename=f"track_{seq}.wav", duration_sec=180.0, side="A", position=1)],
             total_pdf_sec=180,
             total_wav_sec=180.0,
-            total_difference=0
+            total_difference=0,
         )
 
     def test_export_success(self, tmp_path):
@@ -55,10 +51,7 @@ class TestExportAuto:
         export_dir = tmp_path / "exports"
         mock_results = [self.create_mock_side_result(1), self.create_mock_side_result(2)]
 
-        export_settings = ExportSettings(
-            auto_export=True,
-            export_dir=export_dir
-        )
+        export_settings = ExportSettings(auto_export=True, export_dir=export_dir)
 
         # Act
         result_path = export_results_to_json(mock_results, export_settings)
@@ -71,10 +64,10 @@ class TestExportAuto:
         # Ověřit název souboru
         expected_pattern = f"analysis_{datetime.now().strftime('%Y%m%d')}_"
         assert expected_pattern in result_path.name
-        assert result_path.name.endswith('.json')
+        assert result_path.name.endswith(".json")
 
         # Ověřit obsah JSON
-        with open(result_path, encoding='utf-8') as f:
+        with open(result_path, encoding="utf-8") as f:
             data = json.load(f)
 
         assert "exported_at" in data
@@ -109,10 +102,7 @@ class TestExportAuto:
         export_dir = tmp_path / "exports"
         mock_results = [self.create_mock_side_result()]
 
-        export_settings = ExportSettings(
-            auto_export=False,
-            export_dir=export_dir
-        )
+        export_settings = ExportSettings(auto_export=False, export_dir=export_dir)
 
         # Act
         result_path = export_results_to_json(mock_results, export_settings)
@@ -130,10 +120,7 @@ class TestExportAuto:
         # Zajistit, že adresář neexistuje
         assert not export_dir.exists()
 
-        export_settings = ExportSettings(
-            auto_export=True,
-            export_dir=export_dir
-        )
+        export_settings = ExportSettings(auto_export=True, export_dir=export_dir)
 
         # Act
         result_path = export_results_to_json(mock_results, export_settings)
@@ -155,8 +142,7 @@ class TestExportAuto:
         export_settings = ExportSettings(auto_export=True, export_dir=export_dir)
 
         # Mock json.dump funkci, aby vyvolala PermissionError při zápisu
-        with patch('json.dump') as mock_json_dump, caplog.at_level(logging.ERROR):
-
+        with patch("json.dump") as mock_json_dump, caplog.at_level(logging.ERROR):
             # Simulovat chybu při zápisu JSON
             mock_json_dump.side_effect = PermissionError("Access denied")
 
@@ -168,8 +154,7 @@ class TestExportAuto:
 
             # Ověřit, že byla zalogována chyba
             assert len(caplog.records) > 0
-            error_logged = any("Failed to export analysis results" in record.message
-                             for record in caplog.records)
+            error_logged = any("Failed to export analysis results" in record.message for record in caplog.records)
             assert error_logged, f"Expected error log not found in: {[r.message for r in caplog.records]}"
 
     def test_export_empty_results(self, tmp_path):
@@ -199,15 +184,11 @@ class TestExportAuto:
                 side="A",
                 mode="tracks",
                 status="OK",
-                pdf_tracks=[
-                    TrackInfo(title="Test Track", side="A", position=1, duration_sec=245)
-                ],
-                wav_tracks=[
-                    WavInfo(filename="test.wav", duration_sec=245.5, side="A", position=1)
-                ],
+                pdf_tracks=[TrackInfo(title="Test Track", side="A", position=1, duration_sec=245)],
+                wav_tracks=[WavInfo(filename="test.wav", duration_sec=245.5, side="A", position=1)],
                 total_pdf_sec=245,
                 total_wav_sec=245.5,
-                total_difference=0
+                total_difference=0,
             )
         ]
 
@@ -219,7 +200,7 @@ class TestExportAuto:
         # Assert
         assert result_path is not None
 
-        with open(result_path, encoding='utf-8') as f:
+        with open(result_path, encoding="utf-8") as f:
             data = json.load(f)
 
             # Ověřit základní strukturu
@@ -232,8 +213,17 @@ class TestExportAuto:
 
             # Ověřit všechna požadovaná pole
             required_fields = [
-                "seq", "pdf_path", "zip_path", "side", "mode", "status",
-                "pdf_tracks", "wav_tracks", "total_pdf_sec", "total_wav_sec", "total_difference"
+                "seq",
+                "pdf_path",
+                "zip_path",
+                "side",
+                "mode",
+                "status",
+                "pdf_tracks",
+                "wav_tracks",
+                "total_pdf_sec",
+                "total_wav_sec",
+                "total_difference",
             ]
             for field in required_fields:
                 assert field in result, f"Missing field: {field}"
@@ -256,7 +246,6 @@ class TestExportAuto:
             assert "filename" in wav_track
             assert "duration_sec" in wav_track
 
-
     def test_export_open_failure(self, tmp_path, caplog):
         """Test: Ověřit, že když selže otevření souboru pro zápis, aplikace loguje chybu."""
         # Arrange
@@ -265,9 +254,7 @@ class TestExportAuto:
 
         export_settings = ExportSettings(auto_export=True, export_dir=export_dir)
 
-        with patch('pathlib.Path.open', side_effect=PermissionError("Access denied")), \
-             caplog.at_level(logging.ERROR):
-
+        with patch("pathlib.Path.open", side_effect=PermissionError("Access denied")), caplog.at_level(logging.ERROR):
             # Act
             result_path = export_results_to_json(
                 [self.create_mock_side_result(1)],

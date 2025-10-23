@@ -13,5 +13,3 @@ class WavReader(Protocol):
 
     def read_wav_files(self, zip_path: Path) -> list[WavInfo]:
         """Return WAV metadata derived from the provided ZIP archive."""
-
-

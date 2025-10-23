@@ -142,7 +142,9 @@ class MainWindow(QMainWindow):
             pass
 
         self.bottom_table = QTableView()
-        self.bottom_model = TracksTableModel(tolerance_settings=self.tolerance_settings, theme_settings=self.theme_settings)
+        self.bottom_model = TracksTableModel(
+            tolerance_settings=self.tolerance_settings, theme_settings=self.theme_settings
+        )
         self.bottom_table.setModel(self.bottom_model)
 
         splitter.addWidget(self.top_table)
@@ -179,6 +181,7 @@ class MainWindow(QMainWindow):
         self.top_model._schedule_header_resizes = _schedule_header_resizes  # type: ignore[attr-defined]
 
         if self.windowHandle() is not None:
+
             def _on_screen_changed(screen):
                 try:
                     screen.logicalDotsPerInchChanged.connect(lambda _=None: _schedule_header_resizes())
@@ -205,7 +208,7 @@ class MainWindow(QMainWindow):
         self.top_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.top_table.setMouseTracking(True)
         self.bottom_table.setMouseTracking(True)
-        
+
         h_header = self.top_table.horizontalHeader()
         h_header.setStretchLastSection(False)
         h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
@@ -242,12 +245,12 @@ class MainWindow(QMainWindow):
         self.bottom_table.setTextElideMode(Qt.TextElideMode.ElideMiddle)
         self.top_table.setAlternatingRowColors(True)
         self.bottom_table.setAlternatingRowColors(True)
-        
+
         # Install hover affordance delegates for action cells
         self.top_delegate = ActionCellDelegate(self.theme_settings, {6, 7})
         self.top_table.setItemDelegateForColumn(6, self.top_delegate)
         self.top_table.setItemDelegateForColumn(7, self.top_delegate)
-        
+
         self.bottom_delegate = ActionCellDelegate(self.theme_settings, {7})
         self.bottom_table.setItemDelegateForColumn(7, self.bottom_delegate)
 
@@ -261,14 +264,10 @@ class MainWindow(QMainWindow):
         self.bottom_table.clicked.connect(self.on_bottom_cell_clicked)
 
         # Connect hover tracking for action cell affordance
-        self.top_table.entered.connect(
-            lambda idx: self.top_delegate.set_hovered_index(idx)
-        )
+        self.top_table.entered.connect(lambda idx: self.top_delegate.set_hovered_index(idx))
         self.top_table.installEventFilter(self)
-        
-        self.bottom_table.entered.connect(
-            lambda idx: self.bottom_delegate.set_hovered_index(idx)
-        )
+
+        self.bottom_table.entered.connect(lambda idx: self.bottom_delegate.set_hovered_index(idx))
         self.bottom_table.installEventFilter(self)
 
         self.worker_manager.progress.connect(lambda msg: self._set_status(msg, running=True))

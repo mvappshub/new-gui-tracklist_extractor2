@@ -67,8 +67,8 @@ def test_discover_and_pair_files_matches_golden(
     pairs, skipped = discover_and_pair_files(pdf_dir, wav_dir, id_extraction_settings)
     actual = {
         "pairs": {
-            pair_id: {"pdf": paths["pdf"].name, "zip": paths["zip"].name}
-            for pair_id, paths in pairs.items()
+            str(pair_id): {"pdf": pair.pdf.name, "zip": pair.zip.name}
+            for pair_id, pair in pairs.items()
         },
         "skipped_count": skipped,
     }
@@ -153,9 +153,9 @@ def test_compare_data_respects_injected_tolerances(
 @pytest.mark.parametrize(
     ("min_digits", "max_digits", "ignore_numbers", "expected_ids"),
     [
-        (1, 3, [], {"9", "1"}),
-        (2, 3, [], {"1"}),
-        (1, 3, ["9"], {"1"}),
+        (1, 3, [], {1, 9}),
+        (2, 3, [], {1}),
+        (1, 3, ["9"], {1}),
     ],
 )
 def test_discover_and_pair_files_respects_id_settings(
@@ -163,7 +163,7 @@ def test_discover_and_pair_files_respects_id_settings(
     min_digits: int,
     max_digits: int,
     ignore_numbers: list[str],
-    expected_ids: set[str],
+    expected_ids: set[int],
 ):
     pdf_dir = tmp_path / "pdf_param"
     wav_dir = tmp_path / "zip_param"

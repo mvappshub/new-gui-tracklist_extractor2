@@ -37,9 +37,7 @@ class ZipWavFileReader:
                     for name in names:
                         try:
                             relative_path = PurePosixPath(name)
-                            safe_parts = [
-                                part for part in relative_path.parts if part not in ("", ".", "..")
-                            ]
+                            safe_parts = [part for part in relative_path.parts if part not in ("", ".", "..")]
                             if not safe_parts:
                                 logging.warning(
                                     "Přeskakuji podezřelý ZIP člen '%s' v archivu '%s'",

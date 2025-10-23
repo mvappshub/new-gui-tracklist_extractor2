@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 # Named constant to replace magic numbers
 UNKNOWN_POSITION = 999
 
+
 class ParsedFileInfo(NamedTuple):
-    side: Optional[str]
-    position: Optional[int]
+    side: str | None
+    position: int | None
+
 
 class StrictFilenameParser:
     """A domain service to centralize all strict filename parsing logic."""
@@ -47,5 +49,5 @@ class StrictFilenameParser:
             m_pos2 = re.search(rf"(?i)side[^A-Za-z0-9]*{re.escape(side)}[^0-9]*0*([1-9][0-9]?)", name)
             if m_pos2:
                 pos = int(m_pos2.group(1))
-        
+
         return ParsedFileInfo(side=side, position=pos)

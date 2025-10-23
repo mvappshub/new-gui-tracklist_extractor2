@@ -55,32 +55,24 @@ class AiAudioModeDetector(AudioModeDetector):
 
     def _convert_to_extractor_wavinfo(self, wav: WavInfo) -> ExtractorWavInfo:
         """Convert core WavInfo to wav_extractor_wave WavInfo format.
-        
+
         Args:
             wav: Core WavInfo object to convert.
-            
+
         Returns:
             ExtractorWavInfo object with identical field values.
         """
         return ExtractorWavInfo(
-            filename=wav.filename,
-            duration_sec=wav.duration_sec,
-            side=wav.side,
-            position=wav.position
+            filename=wav.filename, duration_sec=wav.duration_sec, side=wav.side, position=wav.position
         )
 
     def _convert_to_core_wavinfo(self, wav: ExtractorWavInfo) -> WavInfo:
         """Convert wav_extractor_wave WavInfo to core WavInfo format.
-        
+
         Args:
             wav: ExtractorWavInfo object to convert.
-            
+
         Returns:
             Core WavInfo object with identical field values.
         """
-        return WavInfo(
-            filename=wav.filename,
-            duration_sec=wav.duration_sec,
-            side=wav.side,
-            position=wav.position
-        )
+        return WavInfo(filename=wav.filename, duration_sec=wav.duration_sec, side=wav.side, position=wav.position)

@@ -7,13 +7,16 @@ from PyQt6.QtCore import qRegisterResourceData, qUnregisterResourceData
 # for :/ paths. The proper mechanism involves data registered by pyrcc6.
 # When pyrcc6 is absent, we rely on ui/theme.py's direct file loading logic.
 
+
 def qInitResources():
     """Initialize resources (called on module import)"""
     pass
 
+
 def qCleanupResources():
     """Cleanup resources"""
     pass
+
 
 # Auto-initialize on import
 qInitResources()

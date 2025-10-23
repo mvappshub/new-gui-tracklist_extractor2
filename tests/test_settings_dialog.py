@@ -47,18 +47,18 @@ class MockMainWindow(QMainWindow):
         menubar = self.menuBar()
 
         # File menu
-        file_menu = menubar.addMenu('File')
+        file_menu = menubar.addMenu("File")
 
         # Edit menu
-        edit_menu = menubar.addMenu('Edit')
+        edit_menu = menubar.addMenu("Edit")
 
         # Settings action with Ctrl+, shortcut
-        settings_action = edit_menu.addAction('Settings...')
-        settings_action.setShortcut('Ctrl+,')
+        settings_action = edit_menu.addAction("Settings...")
+        settings_action.setShortcut("Ctrl+,")
         settings_action.triggered.connect(self.open_settings)
 
         # Help menu
-        help_menu = menubar.addMenu('Help')
+        help_menu = menubar.addMenu("Help")
 
     def open_settings(self):
         """Open settings dialog."""
@@ -89,7 +89,7 @@ def test_settings_dialog_creation():
         print("+ SettingsDialog created successfully")
 
         # Test that it has the expected components
-        assert hasattr(dialog, 'settings_page')
+        assert hasattr(dialog, "settings_page")
         assert isinstance(dialog.settings_page, SettingsPage)
         print("+ SettingsDialog has SettingsPage")
 
@@ -102,6 +102,7 @@ def test_settings_dialog_creation():
     except Exception as e:
         print(f"- SettingsDialog creation failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -122,7 +123,7 @@ def test_settings_dialog_menu_action():
         # Find the settings action in the menu
         edit_menu = None
         for menu in parent.menuBar().findChildren(QMenu):
-            if menu.title() == 'Edit':
+            if menu.title() == "Edit":
                 edit_menu = menu
                 break
 
@@ -132,7 +133,7 @@ def test_settings_dialog_menu_action():
         # Find the Settings... action
         settings_action = None
         for action in edit_menu.actions():
-            if action.text() == 'Settings...':
+            if action.text() == "Settings...":
                 settings_action = action
                 break
 
@@ -140,7 +141,7 @@ def test_settings_dialog_menu_action():
         print("+ Settings... action found")
 
         # Mock the SettingsDialog to avoid actually showing it
-        with patch('fluent_gui.SettingsDialog') as mock_dialog_class:
+        with patch("fluent_gui.SettingsDialog") as mock_dialog_class:
             mock_dialog = MagicMock()
             mock_dialog_class.return_value = mock_dialog
 
@@ -159,6 +160,7 @@ def test_settings_dialog_menu_action():
     except Exception as e:
         print(f"- Menu action test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -179,18 +181,18 @@ def test_settings_dialog_shortcut():
         # Find the settings action
         edit_menu = None
         for menu in parent.menuBar().findChildren(QMenu):
-            if menu.title() == 'Edit':
+            if menu.title() == "Edit":
                 edit_menu = menu
                 break
 
         settings_action = None
         for action in edit_menu.actions():
-            if action.text() == 'Settings...':
+            if action.text() == "Settings...":
                 settings_action = action
                 break
 
         # Mock the SettingsDialog
-        with patch('fluent_gui.SettingsDialog') as mock_dialog_class:
+        with patch("fluent_gui.SettingsDialog") as mock_dialog_class:
             mock_dialog = MagicMock()
             mock_dialog_class.return_value = mock_dialog
 
@@ -209,6 +211,7 @@ def test_settings_dialog_shortcut():
     except Exception as e:
         print(f"- Shortcut test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -225,17 +228,11 @@ def test_configuration_save():
 
             # Create initial test configuration
             test_config = {
-                "input": {
-                    "pdf_dir": str(temp_path / "pdf"),
-                    "wav_dir": str(temp_path / "wav")
-                },
-                "analysis": {
-                    "tolerance_warn": 3,
-                    "tolerance_fail": 7
-                }
+                "input": {"pdf_dir": str(temp_path / "pdf"), "wav_dir": str(temp_path / "wav")},
+                "analysis": {"tolerance_warn": 3, "tolerance_fail": 7},
             }
 
-            with open(test_settings_file, 'w') as f:
+            with open(test_settings_file, "w") as f:
                 json.dump(test_config, f)
 
             # Load the test configuration
@@ -250,7 +247,7 @@ def test_configuration_save():
             save_config(test_settings_file)
 
             # Verify the settings were saved correctly
-            with open(test_settings_file, 'r') as f:
+            with open(test_settings_file, "r") as f:
                 saved_config = json.load(f)
 
             assert saved_config["analysis"]["tolerance_warn"] == 5
@@ -263,6 +260,7 @@ def test_configuration_save():
     except Exception as e:
         print(f"- Configuration save test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -291,6 +289,7 @@ def test_path_resolution_absolute():
     except Exception as e:
         print(f"- Absolute path resolution test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -322,6 +321,7 @@ def test_path_resolution_relative():
     except Exception as e:
         print(f"- Relative path resolution test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -370,6 +370,7 @@ def test_path_directory_validation():
     except Exception as e:
         print(f"- Directory validation test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -391,17 +392,11 @@ def test_settings_dialog_save_button():
 
             # Create initial test configuration
             test_config = {
-                "input": {
-                    "pdf_dir": str(temp_path / "pdf"),
-                    "wav_dir": str(temp_path / "wav")
-                },
-                "analysis": {
-                    "tolerance_warn": 2,
-                    "tolerance_fail": 5
-                }
+                "input": {"pdf_dir": str(temp_path / "pdf"), "wav_dir": str(temp_path / "wav")},
+                "analysis": {"tolerance_warn": 2, "tolerance_fail": 5},
             }
 
-            with open(test_settings_file, 'w') as f:
+            with open(test_settings_file, "w") as f:
                 json.dump(test_config, f)
 
             # Load the test configuration
@@ -416,7 +411,7 @@ def test_settings_dialog_save_button():
             dialog.settings_page.fail_slider.setValue(12)
 
             # Mock the save_config function to verify it's called
-            with patch('settings_page.save_config') as mock_save:
+            with patch("settings_page.save_config") as mock_save:
                 # Click the save button
                 dialog.save_button.click()
 
@@ -436,6 +431,7 @@ def test_settings_dialog_save_button():
     except Exception as e:
         print(f"- Save button test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -456,15 +452,10 @@ def test_no_pdf_directory_errors():
             wav_dir.mkdir()
 
             # Create test settings file
-            test_settings = {
-                "input": {
-                    "pdf_dir": str(pdf_dir),
-                    "wav_dir": str(wav_dir)
-                }
-            }
+            test_settings = {"input": {"pdf_dir": str(pdf_dir), "wav_dir": str(wav_dir)}}
 
             settings_file = temp_path / "settings.json"
-            with open(settings_file, 'w') as f:
+            with open(settings_file, "w") as f:
                 json.dump(test_settings, f)
 
             # Load configuration
@@ -489,7 +480,7 @@ def test_no_pdf_directory_errors():
             window = MainWindow()
 
             # Verify the paths are accessible
-            pdf_dir_path = Path(window.pdf_dir) if hasattr(window, 'pdf_dir') else None
+            pdf_dir_path = Path(window.pdf_dir) if hasattr(window, "pdf_dir") else None
             if pdf_dir_path:
                 assert pdf_dir_path.is_dir()
 
@@ -499,6 +490,7 @@ def test_no_pdf_directory_errors():
     except Exception as e:
         print(f"- PDF directory error test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

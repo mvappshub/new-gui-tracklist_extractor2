@@ -16,8 +16,10 @@ import numpy as np
 import pyqtgraph as pg
 import soundfile as sf
 from PyQt6.QtCore import Qt, QUrl
+
 try:
     from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
+
     _MULTIMEDIA_AVAILABLE = True
     _MULTIMEDIA_IMPORT_ERROR = None
 except ImportError as exc:
@@ -40,10 +42,10 @@ from ui.config_models import WaveformSettings
 
 # Waveform display configuration defaults
 DEFAULT_OVERVIEW_POINTS = 2000  # Maximum points for waveform envelope
-MIN_REGION_DURATION = 0.3        # Minimum region duration in seconds
-DEFAULT_SNAP_TOLERANCE = 0.1     # Default snap tolerance in seconds
-RMS_WINDOW_SIZE = 0.1            # RMS calculation window in seconds
-INITIAL_DETAIL_DURATION = 10.0   # Initial detail view duration in seconds
+MIN_REGION_DURATION = 0.3  # Minimum region duration in seconds
+DEFAULT_SNAP_TOLERANCE = 0.1  # Default snap tolerance in seconds
+RMS_WINDOW_SIZE = 0.1  # RMS calculation window in seconds
+INITIAL_DETAIL_DURATION = 10.0  # Initial detail view duration in seconds
 
 
 class TimeAxisItem(pg.AxisItem):
@@ -216,6 +218,7 @@ class WaveformEditorDialog(QDialog):
     def _load_audio_data(self) -> None:
         """Load and process audio data for the waveform view."""
         import time
+
         start_time = time.time()
 
         try:
@@ -286,14 +289,10 @@ class WaveformEditorDialog(QDialog):
                     break
 
             if not matching_entry:
-                raise FileNotFoundError(
-                    f"WAV file '{self._wav_filename}' not found in archive"
-                )
+                raise FileNotFoundError(f"WAV file '{self._wav_filename}' not found in archive")
 
             with zf.open(matching_entry) as wav_file:
-                with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=".wav"
-                ) as temp_file:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
                     shutil.copyfileobj(wav_file, temp_file)
                     self._temp_wav = Path(temp_file.name)
 
@@ -303,9 +302,7 @@ class WaveformEditorDialog(QDialog):
             return
 
         overview_points = max(1, int(self._overview_points))
-        envelope = self._create_envelope(
-            self._audio_data, self._sample_rate, max_points=overview_points
-        )
+        envelope = self._create_envelope(self._audio_data, self._sample_rate, max_points=overview_points)
 
         if envelope.size == 0:
             return
@@ -359,7 +356,7 @@ class WaveformEditorDialog(QDialog):
         # Pad data to fit windows
         pad_size = (window_size - len(data) % window_size) % window_size
         if pad_size > 0:
-            padded_data = np.pad(data, (0, pad_size), mode='edge')
+            padded_data = np.pad(data, (0, pad_size), mode="edge")
         else:
             padded_data = data
 
@@ -375,8 +372,8 @@ class WaveformEditorDialog(QDialog):
         envelope_data = np.empty((len(time_points) * 2, 2))
         envelope_data[0::2, 0] = time_points  # Time for min values
         envelope_data[1::2, 0] = time_points  # Time for max values
-        envelope_data[0::2, 1] = mins         # Min amplitude values
-        envelope_data[1::2, 1] = maxs         # Max amplitude values
+        envelope_data[0::2, 1] = mins  # Min amplitude values
+        envelope_data[1::2, 1] = maxs  # Max amplitude values
 
         return envelope_data
 
@@ -386,10 +383,7 @@ class WaveformEditorDialog(QDialog):
             return
 
         # Create linear region for selection
-        self._region_item = pg.LinearRegionItem(
-            values=[0.0, 1.0],
-            bounds=[0.0, self._duration_sec]
-        )
+        self._region_item = pg.LinearRegionItem(values=[0.0, 1.0], bounds=[0.0, self._duration_sec])
 
         # Style the region
         region_color = pg.mkBrush("#3B82F640")  # Semi-transparent blue
@@ -499,8 +493,8 @@ class WaveformEditorDialog(QDialog):
 
         local_rms = []
         for offset in range(search_start_sample, search_end_sample - window_size, half_step):
-            window = self._audio_data[offset:offset + window_size]
-            rms = float(np.sqrt(np.mean(window ** 2)))
+            window = self._audio_data[offset : offset + window_size]
+            rms = float(np.sqrt(np.mean(window**2)))
             center_sample = offset + window_size // 2
             local_rms.append((rms, center_sample))
 
@@ -533,7 +527,7 @@ class WaveformEditorDialog(QDialog):
 
     def _update_region_label(self) -> None:
         """Update region time display."""
-        if hasattr(self, 'region_label'):
+        if hasattr(self, "region_label"):
             start_label = self._format_mmss_with_fraction(self._region_bounds[0])
             end_label = self._format_mmss_with_fraction(self._region_bounds[1])
             self.region_label.setText(f"Region: {start_label} - {end_label}")
@@ -541,10 +535,10 @@ class WaveformEditorDialog(QDialog):
     def get_performance_stats(self) -> Dict[str, float]:
         """Get performance statistics for validation."""
         return {
-            'duration_sec': self._duration_sec,
-            'sample_rate': self._sample_rate,
-            'audio_size_mb': len(self._audio_data) * 4 / (1024*1024) if self._audio_data is not None else 0,
-            'waveform_points': len(self._waveform_curve.getData()[0]) if self._waveform_curve else 0,
+            "duration_sec": self._duration_sec,
+            "sample_rate": self._sample_rate,
+            "audio_size_mb": len(self._audio_data) * 4 / (1024 * 1024) if self._audio_data is not None else 0,
+            "waveform_points": len(self._waveform_curve.getData()[0]) if self._waveform_curve else 0,
         }
 
     @staticmethod
@@ -641,8 +635,7 @@ class WaveformEditorDialog(QDialog):
             )
 
             marker.setToolTip(
-                f"{pdf_labels[idx]} - {self._format_mmss(end_time)} "
-                f"(delta {self._format_delta(delta_t)})"
+                f"{pdf_labels[idx]} - {self._format_mmss(end_time)} " f"(delta {self._format_delta(delta_t)})"
             )
             marker.setZValue(2)
 
@@ -876,12 +869,8 @@ class WaveformViewerDialog(QDialog):
         waveform_pen_color = waveform_settings.waveform_color or "#3B82F6"
         position_pen_color = waveform_settings.position_line_color or "#EF4444"
 
-        self._plot_curve = self.plot_widget.plot(
-            pen=pg.mkPen(waveform_pen_color, width=1)
-        )
-        self._position_line = pg.InfiniteLine(
-            angle=90, movable=False, pen=pg.mkPen(position_pen_color, width=1)
-        )
+        self._plot_curve = self.plot_widget.plot(pen=pg.mkPen(waveform_pen_color, width=1))
+        self._position_line = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen(position_pen_color, width=1))
         self.plot_widget.addItem(self._position_line)
 
         controls_layout = QVBoxLayout()
@@ -976,10 +965,7 @@ class WaveformViewerDialog(QDialog):
             if mins.size == 0 or maxs.size == 0:
                 raise ValueError("Unable to compute waveform envelope")
 
-            centers = (
-                (np.arange(mins.size, dtype=float) * window_size)
-                + (window_size / 2.0)
-            ) / float(sample_rate)
+            centers = ((np.arange(mins.size, dtype=float) * window_size) + (window_size / 2.0)) / float(sample_rate)
             time_pairs = np.repeat(centers, 2)
             amplitude_pairs = np.empty(time_pairs.size, dtype=mono_data.dtype)
             amplitude_pairs[0::2] = mins
@@ -1016,14 +1002,10 @@ class WaveformViewerDialog(QDialog):
                     break
 
             if not matching_entry:
-                raise FileNotFoundError(
-                    f"WAV file '{self._wav_filename}' not found in archive"
-                )
+                raise FileNotFoundError(f"WAV file '{self._wav_filename}' not found in archive")
 
             with zf.open(matching_entry) as wav_file:
-                with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=".wav"
-                ) as temp_file:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
                     shutil.copyfileobj(wav_file, temp_file)
                     self._temp_wav = Path(temp_file.name)
 

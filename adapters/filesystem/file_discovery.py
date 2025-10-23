@@ -69,15 +69,11 @@ def discover_and_pair_files(
         if len(pdf_files) == 1 and len(zip_files) == 1:
             pair_key = (pdf_files[0], zip_files[0])
             if pair_key in seen_pairs:
-                logging.debug(
-                    f"Skipping duplicate pair for ID {id_val}: {pdf_files[0].name} & {zip_files[0].name}"
-                )
+                logging.debug(f"Skipping duplicate pair for ID {id_val}: {pdf_files[0].name} & {zip_files[0].name}")
                 continue
             pairs[id_val] = FilePair(pdf=pdf_files[0], zip=zip_files[0])
             seen_pairs.add(pair_key)
         else:
-            logging.warning(
-                f"Ambiguous pairing for ID {id_val}: {len(pdf_files)} PDF(s), {len(zip_files)} ZIP(s)"
-            )
+            logging.warning(f"Ambiguous pairing for ID {id_val}: {len(pdf_files)} PDF(s), {len(zip_files)} ZIP(s)")
             skipped_count += 1
     return pairs, skipped_count
