@@ -31,3 +31,12 @@ class SideResult(BaseModel):
     total_pdf_sec: int
     total_wav_sec: float
     total_difference: int
+
+from dataclasses import dataclass
+
+
+@dataclass
+class FilePair:
+    """Represents a paired PDF and ZIP file based on a shared numeric ID."""
+    pdf: Path
+    zip: Path

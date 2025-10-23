@@ -4,6 +4,7 @@ import logging
 import re
 from pathlib import Path
 
+from core.models.analysis import FilePair
 from core.models.settings import IdExtractionSettings
 
 ID_PATTERN = re.compile(r"\d+")
@@ -37,7 +38,7 @@ def extract_numeric_id(filename: str, settings: IdExtractionSettings) -> list[in
 
 def discover_and_pair_files(
     pdf_dir: Path, wav_dir: Path, settings: IdExtractionSettings
-) -> tuple[dict[str, dict[str, Path]], int]:
+) -> tuple[dict[int, FilePair], int]:
     """Discover and pair files using injected ID extraction settings."""
     logging.info(f"Skenuji PDF v: {pdf_dir}")
     pdf_map: dict[int, list[Path]] = {}
@@ -57,7 +58,7 @@ def discover_and_pair_files(
         for id_val in ids:
             zip_map.setdefault(id_val, []).append(p)
 
-    pairs: dict[str, dict[str, Path]] = {}
+    pairs: dict[int, FilePair] = {}
     skipped_count = 0
     seen_pairs: set[tuple[Path, Path]] = set()
 
@@ -72,7 +73,7 @@ def discover_and_pair_files(
                     f"Skipping duplicate pair for ID {id_val}: {pdf_files[0].name} & {zip_files[0].name}"
                 )
                 continue
-            pairs[str(id_val)] = {"pdf": pdf_files[0], "zip": zip_files[0]}
+            pairs[id_val] = FilePair(pdf=pdf_files[0], zip=zip_files[0])
             seen_pairs.add(pair_key)
         else:
             logging.warning(

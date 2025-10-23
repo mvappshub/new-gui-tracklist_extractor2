@@ -27,6 +27,7 @@ from ui.config_models import (
 )
 from ui.workers.worker_manager import AnalysisWorkerManager
 from ui.theme import load_gz_media_fonts, load_gz_media_stylesheet
+import ui._icons_rc  # Import Qt resources for icons (registers search paths)
 from ui.constants import SETTINGS_FILENAME
 
 if os.environ.get("QT_QPA_PLATFORM") in {"offscreen", "minimal"}:

@@ -40,14 +40,16 @@ Tento adresář obsahuje grafické assety pro GZ Media branding aplikace Final C
 - **Použití:** Tlačítko pro zobrazení waveform (sloupec Waveform)
 - **Design:** Play triangle symbol
 
-## Fallback chování
+## Fallback chování pro Ikony
 
-Pokud SVG ikony nejsou nalezeny nebo se nepodaří načíst, aplikace automaticky použije systémové ikony:
-- **check.svg** → Systémová checkmark ikona
-- **cross.svg** → Systémová cross ikona
-- **play.svg** → Systémová play ikona (SP_MediaPlay)
+Pokud se vlastní SVG ikony (`check.svg`, `cross.svg`, `play.svg`) nepodaří načíst z Qt resources ani ze souborového systému, aplikace se pokusí použít ikony poskytované systémovým tématem. Toto zajišťuje, že aplikace zůstane funkční i v případě chybějících assetů.
 
-Aplikace zobrazí warning v logu, ale nepřestane fungovat.
+Konkrétní mapování fallbacků je následující:
+- **`check`**: `QStyle.StandardPixmap.SP_DialogApplyButton` (obvykle ikona zaškrtnutí)
+- **`cross`**: `QStyle.StandardPixmap.SP_DialogCancelButton` (obvykle ikona křížku)
+- **`play`**: `QStyle.StandardPixmap.SP_MediaPlay` (standardní ikona pro přehrávání)
+
+Aplikace zaznamená varování do logu, pokud dojde k použití fallbacku.
 
 ## Technické požadavky
 
@@ -56,7 +58,7 @@ Aplikace zobrazí warning v logu, ale nepřestane fungovat.
 - **Rozměry:** Šířka max 200px, výška max 40px
 - **Kvalita:** Ostré hrany, žádné kompresní artefakty
 
-## Fallback chování
+## Fallback chování pro Logo
 
 Pokud logo soubory nejsou nalezeny, aplikace zobrazí textový fallback:
 - **Text:** "GZ Media"
@@ -70,6 +72,52 @@ Claim "Emotions. Materialized." se zobrazuje v pravém dolním rohu okna:
 - **Velikost:** 8pt
 - **Barva:** GZ Gray (#6B7280)
 - **Konfigurace:** Lze zapnout/vypnout v settings
+
+## Packaging
+
+Custom SVG icons are bundled using Qt's resource search path system for cross-platform compatibility.
+
+### Qt Resource Approach (Recommended)
+
+Icons are made available via Qt's resource system:
+
+1. **Resource File**: `assets/icons.qrc` declares the SVG files under the `/icons` prefix
+2. **Resource Module**: `ui/_icons_rc.py` registers the assets directory as a Qt resource search path
+   - **Development**: Loads icons directly from filesystem via `QResource.addSearchPath()`
+   - **PyInstaller**: Automatically handles bundled assets via `sys._MEIPASS`
+3. **Import**: The module is imported at startup in `app.py` (line 30)
+4. **Loading**: `get_custom_icon()` in `ui/theme.py` attempts to load from `:/icons/<name>.svg` (Qt resources) with filesystem fallback
+
+### Build/Compilation
+
+**Option A: Using pyrcc6 (Standard Qt Tool)**
+```bash
+pyrcc6 assets/icons.qrc -o ui/_icons_rc.py
+```
+
+**Option B: Using the Build Script (Fallback)**
+```bash
+python tools/build_resources.py
+```
+
+This generates `ui/_icons_rc.py` which registers resource search paths for both development and packaged builds.
+
+### PyInstaller Bundling
+
+For PyInstaller, ensure assets are included:
+
+**Option 1: Data files (via `.spec` or CLI)**
+```bash
+pyinstaller --add-data "assets/icons;assets/icons" app.py
+```
+
+**Option 2: Include in analysis**
+Add to `.spec` file:
+```python
+datas=[('assets/icons', 'assets/icons')]
+```
+
+The resource search path system handles both approaches automatically through `sys._MEIPASS` detection.
 
 ## Přidání nových assetů
 

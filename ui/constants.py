@@ -1,5 +1,13 @@
 from pathlib import Path
 
+"""
+Constants for the UI module.
+
+This module defines constants used throughout the UI, including status messages, table headers, and symbols.
+
+Note: Text symbols like SYMBOL_CHECK and SYMBOL_CROSS are deprecated in favor of icon constants ICON_CHECK, ICON_CROSS, ICON_PLAY for better cross-platform rendering.
+"""
+
 # --- Constants ---
 SETTINGS_FILENAME = Path("settings.json")
 STATUS_READY = "Ready"
@@ -21,7 +29,6 @@ TABLE_HEADERS_TOP = ["#", "File", "Side", "Mode", "Side length", "Status", "PDF"
 TABLE_HEADERS_BOTTOM = ["#", "WAV file", "Title", "Length (PDF)", "Length (WAV)", "Difference(s)", "Match", "Waveform"]
 
 # Table content strings
-SYMBOL_OPEN = "?"  # kept for fallback; not displayed in UI
 
 COLOR_WHITE = "white"
 STATUS_OK = "OK"
@@ -41,12 +48,3 @@ PLACEHOLDER_DASH = "-"
 LABEL_TOTAL_TRACKS = "Total (tracks)"
 # Interface strings
 INTERFACE_MAIN = "Main"
-# Comments (for future translation if needed)
-COMMENT_SETUP_TOP_TABLE = "Setup top table"
-COMMENT_SETUP_BOTTOM_TABLE = "Setup bottom table"
-COMMENT_MAX_WIDTH_WAV = "Set max width for WAV filename column"
-COMMENT_APP_STARTUP = "Application startup"
-COMMENT_CONFIG_LOAD = "Configuration loading"
-COMMENT_CONFIG_ERROR = "Error loading {filename} for configuration: {error}"
-COMMENT_BUTTON_COLOR = "Set button color to dark orange"
-COMMENT_BUTTON_COLOR_DESC = "Dark orange color"

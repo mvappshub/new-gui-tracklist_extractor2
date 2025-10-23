@@ -13,8 +13,6 @@ from ui.constants import (
     LABEL_TOTAL_TRACKS,
     PLACEHOLDER_DASH,
     STATUS_OK,
-    SYMBOL_CHECK,
-    SYMBOL_CROSS,
     TABLE_HEADERS_BOTTOM,
 )
 from ui.theme import get_custom_icon
@@ -23,10 +21,23 @@ from ui.theme import get_custom_icon
 class TracksTableModel(QAbstractTableModel):
     """Model for the bottom table showing track details."""
 
-    def __init__(self, tolerance_settings: ToleranceSettings, theme_settings: ThemeSettings):
+    def __init__(self, tolerance_settings: ToleranceSettings, theme_settings: Optional[ThemeSettings] = None):
+        """Initialize TracksTableModel with dependency injection.
+
+        Args:
+            tolerance_settings: Tolerance settings for match calculations.
+            theme_settings: Optional theme settings for styling. If None, loads settings from the global config.
+        """
         super().__init__()
         self.tolerance_settings = tolerance_settings
-        self.theme_settings = theme_settings
+
+        if theme_settings is None:
+            from config import cfg
+            from ui.config_models import load_theme_settings
+            self.theme_settings = load_theme_settings(cfg)
+        else:
+            self.theme_settings = theme_settings
+
         self._headers = TABLE_HEADERS_BOTTOM
         self._data: Optional[SideResult] = None
 
@@ -93,6 +104,26 @@ class TracksTableModel(QAbstractTableModel):
             if wav_track_exists:
                 return get_custom_icon('play')
 
+        if role in (Qt.ItemDataRole.AccessibleTextRole, Qt.ItemDataRole.ToolTipRole) and column == 6:
+            if is_total_row:
+                return "Match OK" if self._data.status == STATUS_OK else "No match"
+            else:
+                if self._data.mode == "tracks":
+                    pdf_track = self._data.pdf_tracks[row] if row < len(self._data.pdf_tracks) else None
+                    wav_track = self._data.wav_tracks[row] if row < len(self._data.wav_tracks) else None
+
+                    if pdf_track and wav_track:
+                        difference = wav_track.duration_sec - pdf_track.duration_sec
+                        try:
+                            track_tolerance = float(self.tolerance_settings.warn_tolerance)
+                        except (TypeError, ValueError):
+                            track_tolerance = 2.0
+                        
+                        if abs(difference) <= track_tolerance:
+                            return "Match OK"
+                    return "No match"
+            return None
+
         if role == Qt.ItemDataRole.ToolTipRole and column == 7 and not is_total_row:
             return "View waveform"
 
@@ -132,7 +163,7 @@ class TracksTableModel(QAbstractTableModel):
             except (TypeError, ValueError):
                 track_tolerance = 2.0
 
-            match_symbol = SYMBOL_CHECK if wav_track and difference is not None and abs(difference) <= track_tolerance else SYMBOL_CROSS
+            is_match = wav_track and difference is not None and abs(difference) <= track_tolerance
 
             if column == 0:
                 return pdf_track.position
@@ -149,8 +180,7 @@ class TracksTableModel(QAbstractTableModel):
             if column == 5:
                 return f"{difference:+.0f}" if difference is not None else PLACEHOLDER_DASH
             if column == 6:
-                # Return empty string - icon is shown via DecorationRole
-                return ""
+                return ""  # Icon is shown via DecorationRole
             if column == 7:
                 return ""
         else:
@@ -190,8 +220,7 @@ class TracksTableModel(QAbstractTableModel):
         if column == 5:
             return f"{self._data.total_difference:+.0f}"
         if column == 6:
-            # Return empty string - icon is shown via DecorationRole
-            return ""
+            return ""  # Icon is shown via DecorationRole
         if column == 7:
             return ""
         return ""

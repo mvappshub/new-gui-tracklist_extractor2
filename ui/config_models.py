@@ -127,8 +127,7 @@ def load_theme_settings(cfg: AppConfig) -> ThemeSettings:
     action_color_attr = getattr(cfg, "ui_table_action_bg_color", None)
     action_bg_color = getattr(action_color_attr, "value", "#E0E7FF")
 
-    total_row_bg_attr = getattr(cfg, "ui_total_row_bg_color", None)
-    total_row_bg_color = getattr(total_row_bg_attr, "value", "#F3F4F6")
+    total_row_bg_color = cfg.get('ui/total_row_bg_color', '#F3F4F6')
 
     return ThemeSettings(
         font_family=cfg.ui_base_font_family.value,

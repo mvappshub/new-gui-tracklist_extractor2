@@ -29,6 +29,7 @@ from pdf_viewer import PdfViewerDialog
 from services.export_service import export_results_to_json
 from ui.config_models import ThemeSettings, WaveformSettings
 from ui.constants import *
+from ui.delegates.action_cell_delegate import ActionCellDelegate
 from ui.dialogs.settings_dialog import SettingsDialog
 from ui.models.results_table_model import ResultsTableModel
 from ui.models.tracks_table_model import TracksTableModel
@@ -108,6 +109,11 @@ class MainWindow(QMainWindow):
         self.filter_combo.setMinimumWidth(100)
         filter_layout.addWidget(self.filter_combo)
         self.toolbar.addWidget(self.filter_section)
+
+        spacer_between = QWidget()
+        spacer_between.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+        spacer_between.setFixedWidth(16)
+        self.toolbar.addWidget(spacer_between)
 
         self.status_box = QWidget()
         status_layout = QHBoxLayout(self.status_box)
@@ -197,6 +203,9 @@ class MainWindow(QMainWindow):
     def setup_tables(self):
         self.top_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.top_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.top_table.setMouseTracking(True)
+        self.bottom_table.setMouseTracking(True)
+        
         h_header = self.top_table.horizontalHeader()
         h_header.setStretchLastSection(False)
         h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
@@ -233,6 +242,14 @@ class MainWindow(QMainWindow):
         self.bottom_table.setTextElideMode(Qt.TextElideMode.ElideMiddle)
         self.top_table.setAlternatingRowColors(True)
         self.bottom_table.setAlternatingRowColors(True)
+        
+        # Install hover affordance delegates for action cells
+        self.top_delegate = ActionCellDelegate(self.theme_settings, {6, 7})
+        self.top_table.setItemDelegateForColumn(6, self.top_delegate)
+        self.top_table.setItemDelegateForColumn(7, self.top_delegate)
+        
+        self.bottom_delegate = ActionCellDelegate(self.theme_settings, {7})
+        self.bottom_table.setItemDelegateForColumn(7, self.bottom_delegate)
 
     def connect_signals(self):
         self.run_button.clicked.connect(self.run_analysis)
@@ -242,6 +259,17 @@ class MainWindow(QMainWindow):
             selection_model.currentRowChanged.connect(self.on_top_row_selected)
         self.top_table.clicked.connect(self.on_top_cell_clicked)
         self.bottom_table.clicked.connect(self.on_bottom_cell_clicked)
+
+        # Connect hover tracking for action cell affordance
+        self.top_table.entered.connect(
+            lambda idx: self.top_delegate.set_hovered_index(idx)
+        )
+        self.top_table.installEventFilter(self)
+        
+        self.bottom_table.entered.connect(
+            lambda idx: self.bottom_delegate.set_hovered_index(idx)
+        )
+        self.bottom_table.installEventFilter(self)
 
         self.worker_manager.progress.connect(lambda msg: self._set_status(msg, running=True))
         self.worker_manager.result_ready.connect(self.top_model.add_result)
@@ -258,6 +286,12 @@ class MainWindow(QMainWindow):
         ):
             if hasattr(self, "_schedule_header_resizes"):
                 self._schedule_header_resizes()
+        # Clear hover state when mouse leaves table
+        elif event_type == QEvent.Type.Leave:
+            if obj is self.top_table:
+                self.top_delegate.set_hovered_index(None)
+            elif obj is self.bottom_table:
+                self.bottom_delegate.set_hovered_index(None)
         return super().eventFilter(obj, event)
 
     def showEvent(self, event):
@@ -296,14 +330,6 @@ class MainWindow(QMainWindow):
         settings_menu = menubar.addMenu("Settings")
         settings_action = settings_menu.addAction("Open settings...")
         settings_action.triggered.connect(self.open_settings)
-
-    def on_filter_changed(self, filter_text: str):
-        self.top_model.set_filter(filter_text)
-        if self.top_model.rowCount() > 0:
-            self.top_table.selectRow(0)
-        else:
-            self.top_table.clearSelection()
-            self.bottom_model.update_data(None)
 
     def _set_analysis_state(self, is_analyzing: bool):
         try:
