@@ -66,13 +66,13 @@ class ZipWavFileReader:
                                     duration_sec=duration,
                                 )
                             )
-                        except Exception as exc:  # noqa: BLE001
+                        except (zipfile.BadZipFile, IOError, OSError) as exc:
                             logging.warning(
                                 "Nelze přečíst hlavičku WAV '%s' v archivu '%s': %s",
                                 name,
                                 zip_path.name,
                                 exc,
                             )
-        except Exception as exc:  # noqa: BLE001
+        except (zipfile.BadZipFile, IOError, OSError) as exc:
             logging.error("Nelze otevřít ZIP archiv '%s': %s", zip_path.name, exc)
         return wav_infos
