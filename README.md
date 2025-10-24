@@ -32,8 +32,8 @@ Run
     - `WAV input directory`: folder with ZIPs containing mastered WAVs
     - `Export directory`: where reports/exports are written
   - After each analysis run, results auto-export to JSON in `export.default_dir` when `export.auto` is true (filename `analysis_YYYYMMDD_HHMMSS.json`). Use the centralized `services.export_service.export_results_to_json()` helper for all exports.
-- WAV batch utility (optional): `python wav_extractor_wave.py "C:\path\to\masters"`
-- Headless/CI runs set `QT_QPA_PLATFORM=offscreen` automatically. To supply fonts in that mode, place `.ttf` files (e.g. DejaVuSans) into the repository `fonts/` directory and they will be loaded on startup.
+  - WAV batch utility (deprecated): `python wav_extractor_wave.py "C:\path\to\masters"` — use the AnalysisService path with the chained detector instead.
+  - Headless/CI runs set `QT_QPA_PLATFORM=offscreen` automatically. To supply fonts in that mode, place `.ttf` files (e.g. DejaVuSans) into the repository `fonts/` directory and they will be loaded on startup.
 
 
 Dev Commands
