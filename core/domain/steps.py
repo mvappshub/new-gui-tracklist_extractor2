@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from typing import Protocol
-
+from typing import Protocol, List
 from core.models.analysis import WavInfo
-
 
 class DetectionStep(Protocol):
     """Protocol for a single step in the audio mode detection chain."""
 
-    def process(self, wavs: list[WavInfo]) -> bool:
+    def process(self, wavs: List[WavInfo]) -> bool:
         """
         Processes a list of WavInfo objects to detect side and position.
 
