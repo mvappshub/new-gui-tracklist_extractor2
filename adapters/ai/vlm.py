@@ -16,10 +16,11 @@ class VlmClient:
 
     def __init__(self, model: str = "google/gemini-2.5-flash"):
         api_key = os.getenv("OPENROUTER_API_KEY")
+        # Graceful no-op mode when API key is missing
         if not api_key:
-            raise ConnectionError("Missing API key. Set the OPENROUTER_API_KEY environment variable.")
-
-        self._client = OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
+            self._client = None
+        else:
+            self._client = OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
         self._model = model
 
     def _to_data_url(self, pil_image: Image.Image) -> str:
@@ -40,6 +41,10 @@ class VlmClient:
         Returns:
             The parsed JSON response from the VLM as a dictionary.
         """
+        # If client is not configured, operate in no-op mode (return empty)
+        if self._client is None:
+            return {}
+
         messages = [
             {
                 "role": "user",
