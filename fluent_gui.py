@@ -110,6 +110,7 @@ __all__ = [
     "STATUS_WARN",
     "SYMBOL_CHECK",
     "SYMBOL_CROSS",
+    "SYMBOL_OPEN",
     "TABLE_HEADERS_BOTTOM",
     "TABLE_HEADERS_TOP",
     "WINDOW_TITLE",
@@ -117,11 +118,31 @@ __all__ = [
     "ICON_CHECK",
     "ICON_CROSS",
     "ICON_PLAY",
+    # Comment constants
+    "COMMENT_SETUP_TOP_TABLE",
+    "COMMENT_SETUP_BOTTOM_TABLE",
+    "COMMENT_MAX_WIDTH_WAV",
+    "COMMENT_APP_STARTUP",
+    "COMMENT_CONFIG_LOAD",
+    "COMMENT_CONFIG_ERROR",
+    "COMMENT_BUTTON_COLOR",
+    "COMMENT_BUTTON_COLOR_DESC",
 ]
 
 TopTableModel = ResultsTableModel
 BottomTableModel = TracksTableModel
 ICON_OPEN_QICON = get_system_file_icon("file")
+
+# Additional constants for backward compatibility
+SYMBOL_OPEN = "▶"
+COMMENT_SETUP_TOP_TABLE = "Setup top table with PDF data"
+COMMENT_SETUP_BOTTOM_TABLE = "Setup bottom table with WAV data"
+COMMENT_MAX_WIDTH_WAV = "Maximum width for WAV file columns"
+COMMENT_APP_STARTUP = "Application startup initialization"
+COMMENT_CONFIG_LOAD = "Loading configuration from settings file"
+COMMENT_CONFIG_ERROR = "Error loading configuration"
+COMMENT_BUTTON_COLOR = "Button color configuration"
+COMMENT_BUTTON_COLOR_DESC = "Description of button color settings"
 
 
 def get_gz_color(color_key: str):

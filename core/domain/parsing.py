@@ -36,9 +36,9 @@ class StrictFilenameParser:
         m_side = re.search(r"(?i)side[^A-Za-z0-9]*([A-Za-z]+)", name)
         side = m_side.group(1).upper() if m_side else None
 
-        # "A1", "AA02"
+        # "A1", "AA02", "A1_intro", "B2_song"
         if side is None:
-            m_pref = re.match(r"^([A-Za-z]+)0*([1-9][0-9]?)\b", name)
+            m_pref = re.match(r"^([A-Za-z]+)0*([1-9][0-9]?)[^A-Za-z0-9]*", name)
             if m_pref:
                 side = m_pref.group(1).upper()
                 if pos is None:
