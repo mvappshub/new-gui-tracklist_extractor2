@@ -281,22 +281,9 @@ class WaveformEditorDialog(QDialog):
         self._temp_wav = loader.extract_wav()
 
     def _render_waveform(self) -> None:
-        """Render the waveform envelope on the primary plot."""
-        if not self.plot_widget or self._audio_data is None:
-            return
-
-        overview_points = max(1, int(self._overview_points))
-        envelope = self._create_envelope(self._audio_data, self._sample_rate, max_points=overview_points)
-
-        if envelope.size == 0:
-            return
-
-        if self._waveform_curve is None:
-            self._waveform_curve = self.plot_widget.plot(pen=pg.mkPen("#3B82F6", width=1))
-
-        self._waveform_curve.setData(envelope[:, 0], envelope[:, 1])
-        self.plot_widget.setLabel("bottom", "Time", units="s")
-        self.plot_widget.setXRange(0, self._duration_sec, padding=0)
+        """Deprecated: delegates to PlotController.render_waveform()."""
+        if self._plot_controller and self._audio_data is not None:
+            self._plot_controller.render_waveform(self._audio_data, self._sample_rate, self._overview_points)
 
     def _apply_view_limits(self) -> None:
         """Clamp navigation to the valid time range."""
