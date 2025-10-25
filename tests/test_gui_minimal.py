@@ -7,7 +7,6 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import pytest
 from ui import MainWindow, AnalysisWorkerManager, load_tolerance_settings, load_export_settings, load_theme_settings, load_waveform_settings, load_worker_settings, load_id_extraction_settings
-from config import cfg
 
 pytestmark = pytest.mark.gui
 
