@@ -8,7 +8,7 @@ from wav_extractor_wave import ai_parse_batch, merge_ai_results
 
 class StrictParserStep:
     """First step: attempts to parse side/position using strict regex rules."""
-    def __init__(self):
+    def __init__(self) -> None:
         self._parser = StrictFilenameParser()
 
     def process(self, wavs: List[WavInfo]) -> bool:
@@ -37,6 +37,7 @@ class AiParserStep:
                 for w in wavs:
                      if w.side is None:
                         w.side = "UNKNOWN"
+                # merge_ai_results expects list[WavInfo] from core.models.analysis
                 merge_ai_results(wavs, ai_map)
                 # Reset 'UNKNOWN' back to None if AI didn't find anything
                 for w in wavs:

@@ -12,18 +12,15 @@
 import json
 import os
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, List, Dict, Tuple
 from core.domain.parsing import UNKNOWN_POSITION
+from core.models.analysis import WavInfo
 
-# NOTE: The WavInfo class here is a legacy duplicate. The canonical version is in core.models.analysis.
-@dataclass
-class WavInfo:
-    filename: str
-    duration_sec: float
-    side: Optional[str] = None
-    position: Optional[int] = None
+"""Legacy adapter functions retained for backward compatibility.
+
+Types are unified to use core.models.analysis.WavInfo to avoid duplicate models.
+"""
 
 # These functions are still used by AiParserStep
 def ai_parse_batch(filenames: List[str]) -> Dict[str, Tuple[Optional[str], Optional[int]]]:

@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from core.models.analysis import WavInfo
 from core.ports import AudioModeDetector
-from wav_extractor_wave import WavInfo as ExtractorWavInfo
 from wav_extractor_wave import detect_audio_mode_with_ai, normalize_positions
 
 
@@ -37,42 +36,11 @@ class AiAudioModeDetector(AudioModeDetector):
         if not wavs:
             return {}
 
-        # Convert core WavInfo to wav_extractor_wave WavInfo format
-        extractor_wavs = [self._convert_to_extractor_wavinfo(wav) for wav in wavs]
-
-        # Call AI detection function
-        side_map = detect_audio_mode_with_ai(extractor_wavs)
+        # Call AI detection function directly with unified WavInfo type
+        side_map = detect_audio_mode_with_ai(wavs)
 
         # Normalize positions to be sequential (1, 2, 3...) with no gaps
         normalize_positions(side_map)
 
-        # Convert back to core WavInfo format
-        result: dict[str, list[WavInfo]] = {}
-        for side, extractor_wav_list in side_map.items():
-            result[side] = [self._convert_to_core_wavinfo(wav) for wav in extractor_wav_list]
-
-        return result
-
-    def _convert_to_extractor_wavinfo(self, wav: WavInfo) -> ExtractorWavInfo:
-        """Convert core WavInfo to wav_extractor_wave WavInfo format.
-
-        Args:
-            wav: Core WavInfo object to convert.
-
-        Returns:
-            ExtractorWavInfo object with identical field values.
-        """
-        return ExtractorWavInfo(
-            filename=wav.filename, duration_sec=wav.duration_sec, side=wav.side, position=wav.position
-        )
-
-    def _convert_to_core_wavinfo(self, wav: ExtractorWavInfo) -> WavInfo:
-        """Convert wav_extractor_wave WavInfo to core WavInfo format.
-
-        Args:
-            wav: ExtractorWavInfo object to convert.
-
-        Returns:
-            Core WavInfo object with identical field values.
-        """
-        return WavInfo(filename=wav.filename, duration_sec=wav.duration_sec, side=wav.side, position=wav.position)
+        # side_map is already in unified WavInfo type
+        return side_map
