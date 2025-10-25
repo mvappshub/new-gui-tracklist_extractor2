@@ -42,6 +42,7 @@ def test_gui_show(qapp, qtbot):
             waveform_settings=waveform_settings,
             worker_manager=worker_manager,
             settings_filename=cfg.file,
+            app_config=cfg,
         )
         qtbot.addWidget(window)
         print("MainWindow created successfully")

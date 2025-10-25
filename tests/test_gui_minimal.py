@@ -32,6 +32,7 @@ def test_gui_minimal(qtbot, isolated_config, tolerance_settings, id_extraction_s
         waveform_settings=waveform_settings,
         worker_manager=worker_manager,
         settings_filename=isolated_config.file,
+        app_config=isolated_config,
     )
     qtbot.addWidget(window)
 
