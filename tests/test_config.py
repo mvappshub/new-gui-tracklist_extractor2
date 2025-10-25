@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import pytest
+import config as config_module
 
-from config import cfg
 
-
-def test_config():
+def test_config(isolated_config):
     """Test configuration system functionality."""
     print("Testing configuration system...")
 
     try:
-        # Test basic config access
+        # Test basic config access via isolated fixture (monkeypatched in config_module)
+        cfg = config_module.cfg
         print(f"LLM Model: {cfg.llm_model}")
         print(f"PDF Dir: {cfg.input_pdf_dir}")
         print(f"WAV Dir: {cfg.input_wav_dir}")

@@ -1,3 +1,45 @@
+Execution Policy (MANDATORY)
+This policy overrides any other instruction. Non-compliance = stop work.
+1) Stop-the-line
+Jakmile selže cokoliv z níže uvedeného, okamžitě zastav práce, vrať poslední změny do zelené a teprve pak pokračuj:
+openspec validate <change> --strict
+pytest -q (doporučeno --maxfail=1)
+mypy --strict
+Žádné další úkoly se neprovádí, dokud nejsou všechny tři kontroly zelené.
+2) Zelená po blocích (gated workflow)
+Každá sekce v tasks.md (1., 2., 3., …) končí minimální sadou kontrol:
+openspec validate <change> --strict
+pytest -q
+mypy --strict
+
+Pokud je cokoliv červené, sekce je nehotová.
+3) Výjimky (omezené a dohledatelné)
+Flaky test: dočasně označ @pytest.mark.flaky(reruns=2) + popis důvodu a TODO v tasks.md.
+Změna chování: nejdřív uprav spec (ADDED/MODIFIED/REMOVED), pak testy, až poté kód.
+Karanténa: @pytest.mark.xfail(strict=True, reason="…", run=False) s datem odstranění.
+4) Commity (granulární a auditovatelné)
+1 podúkol = 1 commit. Formát Conventional Commits + OpenSpec tag:
+type(scope): stručný popis  [refs: #openspec-task:<ID>]
+
+Příklady:
+refactor(ui): SettingsPage přijímá AppConfig v ctor [refs: #openspec-task:1.1]
+test(tests): přidána AppConfig fixture [refs: #openspec-task:4.1]
+chore(openspec): validate refactor-config-decomposition --strict (pass) [refs: #openspec-task:5.1]
+5) Pre-push/CI brány (fail = žádný push/merge)
+Před každým pushem spusť lokálně:
+openspec validate <change> --strict && pytest -q && mypy --strict
+
+V CI nastav povinné kontroly:
+OpenSpec validate (strict)
+Pytest
+Mypy strict
+6) Definition of Done (celá změna)
+rg "from config import cfg" --type py (pro config změnu: výskyt pouze v entry pointech)
+openspec validate <change> --strict = green
+pytest = green
+mypy --strict = green
+Smoke skripty prošly (pokud jsou součástí projektu)
+
 # Tasks: Config Decomposition Completion
 
 ## 1. Refactor settings_page.py
