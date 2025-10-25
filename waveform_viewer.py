@@ -6,15 +6,10 @@
 from __future__ import annotations
 
 import logging
-import shutil
-import tempfile
-import zipfile
 from pathlib import Path
 from typing import Optional, List, Tuple, Dict
 
-import numpy as np
 import pyqtgraph as pg
-import soundfile as sf
 from PyQt6.QtCore import Qt, QUrl
 
 try:
@@ -311,10 +306,10 @@ class WaveformEditorDialog(QDialog):
 
     def _create_envelope(
         self,
-        data: np.ndarray,
+        data,
         sample_rate: int,
         max_points: int = DEFAULT_OVERVIEW_POINTS,
-    ) -> np.ndarray:
+    ):
         """Create envelope from audio data for efficient display (delegates to utils)."""
         return create_envelope(data, sample_rate, max_points=max_points)
 
@@ -422,11 +417,20 @@ class WaveformEditorDialog(QDialog):
 
     def get_performance_stats(self) -> Dict[str, float]:
         """Get performance statistics for validation."""
+        waveform_points = 0
+        if self.plot_widget:
+            try:
+                items = self.plot_widget.listDataItems()
+                if items:
+                    x, _y = items[0].getData()
+                    waveform_points = len(x) if x is not None else 0
+            except Exception:
+                waveform_points = 0
         return {
             "duration_sec": self._duration_sec,
             "sample_rate": self._sample_rate,
             "audio_size_mb": len(self._audio_data) * 4 / (1024 * 1024) if self._audio_data is not None else 0,
-            "waveform_points": len(self._waveform_curve.getData()[0]) if self._waveform_curve else 0,
+            "waveform_points": waveform_points,
         }
 
     @staticmethod
