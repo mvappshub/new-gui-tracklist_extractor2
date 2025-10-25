@@ -3,7 +3,7 @@ import base64
 import io
 import json
 import os
-from typing import Any, List
+from typing import Any, List, Dict, cast
 
 try:
     from openai import OpenAI
@@ -45,17 +45,17 @@ class VlmClient:
         if self._client is None:
             return {}
 
-        messages = [
+        image_contents: List[Dict[str, Any]] = [
+            {"type": "image_url", "image_url": {"url": self._to_data_url(img)}} for img in images
+        ]
+        messages: List[Dict[str, Any]] = [
             {
                 "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    *({"type": "image_url", "image_url": {"url": self._to_data_url(img)}} for img in images)
-                ]
+                "content": [{"type": "text", "text": prompt}] + image_contents,
             }
         ]
 
-        response = self._client.chat.completions.create(
+        response = self._client.chat.completions.create(  # type: ignore[call-overload]  # TODO: ai-typing-hardening
             model=self._model,
             messages=messages,
             response_format={"type": "json_object"},
@@ -67,7 +67,7 @@ class VlmClient:
             raise ValueError("AI returned an empty response.")
             
         try:
-            return json.loads(content)
+            return cast(Dict[str, Any], json.loads(content))
         except json.JSONDecodeError:
             cleaned_content = content.strip().strip("`").strip("json\n")
-            return json.loads(cleaned_content)
+            return cast(Dict[str, Any], json.loads(cleaned_content))
