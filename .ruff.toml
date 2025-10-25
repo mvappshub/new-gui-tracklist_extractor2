@@ -18,7 +18,6 @@ exclude = [
     "config.py",
     "fluent_gui.py",
     "waveform_viewer.py",
-    "wav_extractor_wave.py",
     "pdf_viewer.py",
     "settings_page.py"
 ]

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from core.models.analysis import WavInfo
 from core.ports import AudioModeDetector
-from wav_extractor_wave import detect_audio_mode_with_ai, normalize_positions
+from adapters.audio.ai_helpers import detect_audio_mode_with_ai, normalize_positions
 
 
 class AiAudioModeDetector(AudioModeDetector):

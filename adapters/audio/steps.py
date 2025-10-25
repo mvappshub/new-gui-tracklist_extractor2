@@ -4,7 +4,7 @@ from typing import List
 
 from core.domain.parsing import StrictFilenameParser
 from core.models.analysis import WavInfo
-from wav_extractor_wave import ai_parse_batch, merge_ai_results
+from adapters.audio.ai_helpers import ai_parse_batch, merge_ai_results
 
 class StrictParserStep:
     """First step: attempts to parse side/position using strict regex rules."""

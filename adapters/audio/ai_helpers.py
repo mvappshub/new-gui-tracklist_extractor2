@@ -1,40 +1,21 @@
-# DEPRECATION WARNING:
-# This module is considered deprecated and will be removed in a future version.
-# Its functionality has been decomposed and moved to dedicated components:
-# - Filename parsing: core.domain.parsing.StrictFilenameParser
-# - AI detection logic: adapters.audio.steps.AiParserStep
-# - Fallback logic: adapters.audio.steps.DeterministicFallbackStep
-# - Orchestration: adapters.audio.chained_detector.ChainedAudioModeDetector
-#
-# This file is kept for backward compatibility of the AI functions it exposes.
-# New code should NOT use this module directly.
+"""AI parsing helper functions for audio mode detection.
+
+Migrated from legacy wav_extractor_wave.py module.
+"""
+
+from __future__ import annotations
 
 import json
 import os
 import sys
-from pathlib import Path
 from typing import Optional, List, Dict, Tuple
+
 from core.domain.parsing import UNKNOWN_POSITION
 from core.models.analysis import WavInfo
 
-"""Legacy adapter functions retained for backward compatibility.
 
-Types are unified to use core.models.analysis.WavInfo to avoid duplicate models.
-"""
-
-# These functions are still used by AiParserStep
-def ai_parse_batch(filenames: List[str]) -> Dict[str, Tuple[Optional[str], Optional[int]]]:
-    # ... (implementation remains for now)
-    pass # Placeholder to keep the structure
-
-def merge_ai_results(wavs: List[WavInfo], ai_map: Dict[str, Tuple[Optional[str], Optional[int]]]) -> None:
-    # ... (implementation remains for now)
-    pass # Placeholder to keep the structure
-
-# --- All other functions from the original file are now removed or considered deprecated ---
-
-# Keeping the original implementation of the two functions still in use
 def _load_ai_client():
+    """Load OpenAI client from environment configuration."""
     try:
         from openai import OpenAI
     except Exception:
@@ -55,7 +36,17 @@ def _load_ai_client():
             pass
     return None, None
 
+
 def ai_parse_batch(filenames: List[str]) -> Dict[str, Tuple[Optional[str], Optional[int]]]:
+    """Parse WAV filenames using AI to extract side and position metadata.
+
+    Args:
+        filenames: List of WAV filenames to parse.
+
+    Returns:
+        Dictionary mapping filename to (side, position) tuple.
+        Returns empty dict if AI client unavailable or parsing fails.
+    """
     client, model = _load_ai_client()
     if not client or not model or not filenames:
         return {}
@@ -94,7 +85,14 @@ def ai_parse_batch(filenames: List[str]) -> Dict[str, Tuple[Optional[str], Optio
         print(f"[WARN] AI fallback selhal: {e}", file=sys.stderr)
         return {}
 
+
 def merge_ai_results(wavs: List[WavInfo], ai_map: Dict[str, Tuple[Optional[str], Optional[int]]]) -> None:
+    """Merge AI parsing results into WavInfo objects.
+
+    Args:
+        wavs: List of WavInfo objects to update.
+        ai_map: Dictionary mapping filename to (side, position) tuple from AI.
+    """
     if not ai_map:
         return
     for w in wavs:
