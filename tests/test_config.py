@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import pytest
 
 from config import cfg
 
@@ -24,13 +21,10 @@ def test_config():
         print(f"Analysis Tolerance: {cfg.analysis_tolerance_warn}")
 
         print("Configuration system works correctly!")
-        return True
+        assert True
 
     except Exception as e:
         print(f"Configuration error: {e}")
-        return False
+        pytest.fail(f"Configuration error: {e}")
 
 
-if __name__ == "__main__":
-    success = test_config()
-    sys.exit(0 if success else 1)

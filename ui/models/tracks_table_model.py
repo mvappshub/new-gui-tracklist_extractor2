@@ -21,23 +21,16 @@ from ui.theme import get_custom_icon
 class TracksTableModel(QAbstractTableModel):
     """Model for the bottom table showing track details."""
 
-    def __init__(self, tolerance_settings: ToleranceSettings, theme_settings: Optional[ThemeSettings] = None):
+    def __init__(self, tolerance_settings: ToleranceSettings, theme_settings: ThemeSettings):
         """Initialize TracksTableModel with dependency injection.
 
         Args:
             tolerance_settings: Tolerance settings for match calculations.
-            theme_settings: Optional theme settings for styling. If None, loads settings from the global config.
+            theme_settings: Theme settings for styling.
         """
         super().__init__()
         self.tolerance_settings = tolerance_settings
-
-        if theme_settings is None:
-            from config import cfg
-            from ui.config_models import load_theme_settings
-
-            self.theme_settings = load_theme_settings(cfg)
-        else:
-            self.theme_settings = theme_settings
+        self.theme_settings = theme_settings
 
         self._headers = TABLE_HEADERS_BOTTOM
         self._data: Optional[SideResult] = None

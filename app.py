@@ -4,6 +4,9 @@ import os
 from pathlib import Path
 from typing import Optional
 
+# Debug: Print the Python executable path to validate which Python is being used
+print(f"Debug: Python executable: {sys.executable}")
+
 try:
     from dotenv import load_dotenv
 
@@ -95,6 +98,7 @@ def main(config_path: Optional[Path] = None):
         waveform_settings=waveform_settings,
         worker_manager=worker_manager,
         settings_filename=config_path,
+        app_config=cfg,
     )
     window.show()
     sys.exit(app.exec())

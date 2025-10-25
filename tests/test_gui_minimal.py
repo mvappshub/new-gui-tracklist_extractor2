@@ -3,50 +3,38 @@
 
 import sys
 import os
-
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from PyQt6.QtWidgets import QApplication
-from config import load_config
+import pytest
+from ui import MainWindow, AnalysisWorkerManager, load_tolerance_settings, load_export_settings, load_theme_settings, load_waveform_settings, load_worker_settings, load_id_extraction_settings
+from config import cfg
 
+pytestmark = pytest.mark.gui
 
-def test_gui_minimal():
-    """Test minimal GUI initialization."""
-    print("Testing minimal GUI initialization...")
+def test_gui_minimal(qtbot, isolated_config, tolerance_settings, id_extraction_settings, waveform_settings):
+    """Test minimal GUI initialization using proper fixtures."""
 
-    try:
-        # Test QApplication creation
-        app = QApplication(sys.argv)
-        print("QApplication created successfully")
+    # Dependencies are now loaded using fixtures or from the isolated_config
+    export_settings = load_export_settings(isolated_config)
+    theme_settings = load_theme_settings(isolated_config)
+    worker_settings = load_worker_settings(isolated_config)
 
-        # Test config loading
-        load_config("settings.json")
-        print("Configuration loaded successfully")
+    worker_manager = AnalysisWorkerManager(
+        worker_settings=worker_settings,
+        tolerance_settings=tolerance_settings,
+        id_extraction_settings=id_extraction_settings,
+    )
 
-        # Try to import MainWindow class
-        from fluent_gui import MainWindow
+    window = MainWindow(
+        tolerance_settings=tolerance_settings,
+        export_settings=export_settings,
+        theme_settings=theme_settings,
+        waveform_settings=waveform_settings,
+        worker_manager=worker_manager,
+        settings_filename=isolated_config.file,
+    )
+    qtbot.addWidget(window)
 
-        print("MainWindow imported successfully")
+    assert window.isVisible() is False # We don't call show()
+    assert "Final Cue Sheet Checker" in window.windowTitle()
 
-        # Try to create MainWindow instance (this is where it might crash)
-        print("Creating MainWindow instance...")
-        window = MainWindow()
-        print("MainWindow created successfully")
-
-        # Don't show the window to avoid display issues
-        # window.show()
-
-        print("Minimal GUI test completed successfully!")
-        return True
-
-    except Exception as e:
-        print(f"GUI initialization error: {e}")
-        import traceback
-
-        traceback.print_exc()
-        return False
-
-
-if __name__ == "__main__":
-    success = test_gui_minimal()
-    sys.exit(0 if success else 1)

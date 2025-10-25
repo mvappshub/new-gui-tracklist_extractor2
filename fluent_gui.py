@@ -165,7 +165,7 @@ def load_gz_media_stylesheet(app):
 
 class SettingsDialog(UISettingsDialog):
     def __init__(self, parent=None):
-        super().__init__(settings_filename=SETTINGS_FILENAME, parent=parent)
+        super().__init__(settings_filename=SETTINGS_FILENAME, app_config=cfg, parent=parent)
         button_box = self.findChild(QDialogButtonBox)
         self.save_button = None
         if button_box is not None:
@@ -204,6 +204,7 @@ class MainWindow(UIMainWindow):
             waveform_settings=waveform_settings,
             worker_manager=worker_manager,
             settings_filename=SETTINGS_FILENAME,
+            app_config=cfg,
         )
 
 

@@ -34,6 +34,7 @@ from ui.dialogs.settings_dialog import SettingsDialog
 from ui.models.results_table_model import ResultsTableModel
 from ui.models.tracks_table_model import TracksTableModel
 from ui.workers.worker_manager import AnalysisWorkerManager
+from config import AppConfig
 
 
 class MainWindow(QMainWindow):
@@ -62,6 +63,7 @@ class MainWindow(QMainWindow):
         waveform_settings: WaveformSettings,
         worker_manager: AnalysisWorkerManager,
         settings_filename: Path,
+        app_config: AppConfig,
     ):
         super().__init__()
         self.tolerance_settings = tolerance_settings
@@ -71,6 +73,7 @@ class MainWindow(QMainWindow):
         self.worker_manager = worker_manager
         self.worker_manager.setParent(self)
         self.settings_filename = Path(settings_filename)
+        self.app_config = app_config
 
         self.setWindowTitle(WINDOW_TITLE)
         self.resize(1200, 800)
@@ -465,7 +468,7 @@ class MainWindow(QMainWindow):
 
     def open_settings(self):
         try:
-            settings_dialog = SettingsDialog(settings_filename=self.settings_filename, parent=self)
+            settings_dialog = SettingsDialog(settings_filename=self.settings_filename, app_config=self.app_config, parent=self)
             settings_dialog.exec()
         except Exception as exc:
             logging.error("Failed to open settings dialog: %s", exc)

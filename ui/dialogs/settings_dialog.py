@@ -13,14 +13,14 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
-from config import save_config
+from config import save_config, AppConfig
 from settings_page import SettingsPage
 
 
 class SettingsDialog(QDialog):
     """Modal settings dialog containing SettingsPage with Save/Cancel buttons."""
 
-    def __init__(self, settings_filename: Path, parent=None):
+    def __init__(self, settings_filename: Path, app_config: AppConfig, parent=None):
         super().__init__(parent)
         self.settings_filename = Path(settings_filename)
         self.setWindowTitle("Settings")
@@ -34,7 +34,7 @@ class SettingsDialog(QDialog):
         scroll_area.setWidgetResizable(True)
         layout.addWidget(scroll_area)
 
-        self.settings_page = SettingsPage()
+        self.settings_page = SettingsPage(app_config)
         scroll_area.setWidget(self.settings_page)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)

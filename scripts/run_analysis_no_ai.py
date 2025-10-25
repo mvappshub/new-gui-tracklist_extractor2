@@ -12,6 +12,11 @@ from services.analysis_service import AnalysisService
 from adapters.audio.wav_reader import ZipWavFileReader
 from adapters.audio.fake_mode_detector import FakeAudioModeDetector
 from core.models.settings import IdExtractionSettings, ToleranceSettings
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 
 
 def main() -> int:

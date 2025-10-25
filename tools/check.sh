@@ -19,7 +19,8 @@ else
 fi
 
 echo "Collecting coverage metrics..."
-QT_QPA_PLATFORM=offscreen "${PYTHON_CMD[@]}" -m coverage run -m pytest -m "not gui"
+# ZDE JE OPRAVA: Odstraněn flag -m "not gui" pro spuštění VŠECH testů
+QT_QPA_PLATFORM=offscreen "${PYTHON_CMD[@]}" -m coverage run -m pytest
 "${PYTHON_CMD[@]}" -m coverage report --fail-under=85
 
 echo "Running Ruff lint checks..."
