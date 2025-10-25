@@ -8,18 +8,18 @@ from __future__ import annotations
 import json
 import os
 import sys
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Tuple, Any
 
 from core.domain.parsing import UNKNOWN_POSITION
 from core.models.analysis import WavInfo
 
 
-def _load_ai_client():
+def _load_ai_client() -> Tuple[Any, Optional[str]]:
     """Load OpenAI client from environment configuration."""
     try:
         from openai import OpenAI
     except Exception:
-        return None, None
+        return (None, None)
     if os.getenv("OPENROUTER_API_KEY"):
         try:
             client = OpenAI(api_key=os.getenv("OPENROUTER_API_KEY"), base_url="https://openrouter.ai/api/v1")
@@ -34,7 +34,7 @@ def _load_ai_client():
             return client, model
         except Exception:
             pass
-    return None, None
+    return (None, None)
 
 
 def ai_parse_batch(filenames: List[str]) -> Dict[str, Tuple[Optional[str], Optional[int]]]:
