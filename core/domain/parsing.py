@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Any
 
 # Named constant to replace magic numbers
 UNKNOWN_POSITION = 999
