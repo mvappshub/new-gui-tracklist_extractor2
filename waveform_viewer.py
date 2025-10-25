@@ -6,10 +6,15 @@
 from __future__ import annotations
 
 import logging
+import shutil
+import tempfile
+import zipfile
 from pathlib import Path
 from typing import Optional, List, Tuple, Dict
 
+import numpy as np
 import pyqtgraph as pg
+import soundfile as sf
 from PyQt6.QtCore import Qt, QUrl
 
 try:
@@ -80,6 +85,11 @@ class WaveformEditorDialog(QDialog):
         self._marker_times: List[float] = []
         self._pdf_tracks: List[Dict] = []  # Store PDF track data
         self._playhead_line: Optional[pg.InfiniteLine] = None
+
+        # Compatibility shims for tests (populated after controller setup)
+        self._region_item: Optional[pg.LinearRegionItem] = None
+        self._waveform_curve: Optional[pg.PlotDataItem] = None
+        self._region_bounds: Tuple[float, float] = (0.0, 1.0)
 
         # Inherit extraction method from parent class
         self._slider_updating = False
@@ -217,6 +227,9 @@ class WaveformEditorDialog(QDialog):
             # Render waveform via controller
             if self._plot_controller and self.plot_widget is not None:
                 self._plot_controller.render_waveform(self._audio_data, self._sample_rate, self._overview_points)
+                # Populate compatibility shim for _waveform_curve
+                self._waveform_curve = self._plot_controller.waveform_curve()
+
                 self._plot_controller.setup_region_selection(
                     duration_sec=self._duration_sec,
                     initial_region=(0.0, min(1.0, self._duration_sec)),
@@ -226,6 +239,8 @@ class WaveformEditorDialog(QDialog):
                     sample_rate=self._sample_rate,
                     snap_tolerance=self._snap_tolerance,
                 )
+                # Populate compatibility shim for _region_item
+                self._region_item = self._plot_controller.region_item()
 
             # Setup player source
             if self._playback_controller is not None and self._temp_wav is not None:
@@ -318,8 +333,10 @@ class WaveformEditorDialog(QDialog):
         pass
 
     def _on_region_changed(self) -> None:
-        """Deprecated: handled by PlotController; mediator listens to its signal."""
-        pass
+        """Compatibility shim: delegates to mediator with current region values."""
+        if self._plot_controller:
+            start, end = self._plot_controller.get_region()
+            self._on_region_changed_mediator(start, end)
 
     def _snap_region_to_audio(self, min_val: float, max_val: float) -> Tuple[float, float]:
         """Snap region boundaries to audio features (RMS peaks and zero crossings)."""
