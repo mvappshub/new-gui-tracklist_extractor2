@@ -13,7 +13,7 @@ class ChainedAudioModeDetector(AudioModeDetector):
     """
     def __init__(self, steps: List[DetectionStep] | None = None):
         if steps is None:
-            self._steps = [
+            self._steps: List[DetectionStep] = [
                 StrictParserStep(),
                 AiParserStep(),
                 DeterministicFallbackStep(),
