@@ -40,6 +40,7 @@ from PyQt6.QtWidgets import (
 from core.models.settings import ToleranceSettings
 from ui.config_models import WaveformSettings
 from ui.waveform.audio_loader import AudioLoader
+from ui.waveform.utils import TimeAxisItem as UtilsTimeAxisItem, create_envelope, format_mmss, format_mmss_with_fraction
 
 # Waveform display configuration defaults
 DEFAULT_OVERVIEW_POINTS = 2000  # Maximum points for waveform envelope
@@ -49,20 +50,8 @@ RMS_WINDOW_SIZE = 0.1  # RMS calculation window in seconds
 INITIAL_DETAIL_DURATION = 10.0  # Initial detail view duration in seconds
 
 
-class TimeAxisItem(pg.AxisItem):
-    """Axis item that formats ticks as MM:SS."""
-
-    def tickStrings(self, values, scale, spacing):
-        labels: List[str] = []
-        for value in values:
-            total_seconds = max(0.0, float(value))
-            minutes = int(total_seconds // 60)
-            seconds = int(round(total_seconds - minutes * 60))
-            if seconds == 60:
-                minutes += 1
-                seconds = 0
-            labels.append(f"{minutes:02d}:{seconds:02d}")
-        return labels
+class TimeAxisItem(UtilsTimeAxisItem):
+    pass
 
 
 class WaveformEditorDialog(QDialog):
@@ -321,45 +310,8 @@ class WaveformEditorDialog(QDialog):
         sample_rate: int,
         max_points: int = DEFAULT_OVERVIEW_POINTS,
     ) -> np.ndarray:
-        """Create envelope from audio data for efficient display."""
-        if data.size == 0:
-            return np.array([])
-
-        # Calculate points per pixel for downsampling
-        duration = len(data) / sample_rate
-        points_per_second = max_points / duration if duration > 0 else max_points
-
-        if points_per_second >= sample_rate / 2:
-            # Use original data if we don't need much downsampling
-            time_points = np.arange(len(data)) / sample_rate
-            return np.column_stack([time_points, data])
-
-        # Create envelope using min/max windows for better visual representation
-        window_size = max(1, int(sample_rate / points_per_second))
-
-        # Pad data to fit windows
-        pad_size = (window_size - len(data) % window_size) % window_size
-        if pad_size > 0:
-            padded_data = np.pad(data, (0, pad_size), mode="edge")
-        else:
-            padded_data = data
-
-        # Reshape and calculate min/max for each window
-        reshaped = padded_data.reshape(-1, window_size)
-        mins = reshaped.min(axis=1)
-        maxs = reshaped.max(axis=1)
-
-        # Create time points for envelope (center of each window)
-        time_points = (np.arange(len(mins)) * window_size + window_size // 2) / sample_rate
-
-        # Create min/max pairs for filled envelope effect
-        envelope_data = np.empty((len(time_points) * 2, 2))
-        envelope_data[0::2, 0] = time_points  # Time for min values
-        envelope_data[1::2, 0] = time_points  # Time for max values
-        envelope_data[0::2, 1] = mins  # Min amplitude values
-        envelope_data[1::2, 1] = maxs  # Max amplitude values
-
-        return envelope_data
+        """Create envelope from audio data for efficient display (delegates to utils)."""
+        return create_envelope(data, sample_rate, max_points=max_points)
 
     def _setup_region_selection(self) -> None:
         """Setup interactive region selection."""
@@ -527,25 +479,13 @@ class WaveformEditorDialog(QDialog):
 
     @staticmethod
     def _format_mmss(seconds: float) -> str:
-        """Format seconds as MM:SS without decimals."""
-        total = max(0.0, float(seconds))
-        minutes = int(total // 60)
-        secs = int(round(total - minutes * 60))
-        if secs == 60:
-            minutes += 1
-            secs = 0
-        return f"{minutes:02d}:{secs:02d}"
+        """Format seconds as MM:SS without decimals (delegates to utils)."""
+        return format_mmss(seconds)
 
     @staticmethod
     def _format_mmss_with_fraction(seconds: float) -> str:
-        """Format seconds as MM:SS.s with one decimal place."""
-        total = max(0.0, float(seconds))
-        minutes = int(total // 60)
-        secs = total - minutes * 60
-        if secs >= 59.95:
-            minutes += 1
-            secs = 0.0
-        return f"{minutes:02d}:{secs:04.1f}".replace(" ", "0")
+        """Format seconds as MM:SS.s with one decimal place (delegates to utils)."""
+        return format_mmss_with_fraction(seconds)
 
     @staticmethod
     def _format_delta(delta_seconds: float) -> str:

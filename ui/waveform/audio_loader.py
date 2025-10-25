@@ -47,7 +47,11 @@ class AudioLoader:
                         return Path(temp_file.name)
         except zipfile.BadZipFile as exc:
             raise RuntimeError(f"Invalid ZIP archive: {self._zip_path}") from exc
+        except FileNotFoundError:
+            # Propagate missing-entry error as FileNotFoundError (characterization expectation)
+            raise
         except OSError as exc:
+            # Wrap other OS-related errors
             raise RuntimeError(f"Failed to extract WAV: {exc}") from exc
 
     def load_audio_data(self, wav_path: Path) -> Tuple[np.ndarray, int, float]:
