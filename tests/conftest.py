@@ -141,3 +141,9 @@ def waveform_settings() -> WaveformSettings:
 def audio_mode_detector() -> FakeAudioModeDetector:
     """Provide fake audio mode detector for tests (no external API calls)."""
     return FakeAudioModeDetector()
+
+
+@pytest.fixture
+def settings_filename(tmp_path: Path) -> Path:
+    """Provide temporary settings filename for DI tests."""
+    return tmp_path / "test_settings.json"
