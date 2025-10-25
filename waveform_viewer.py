@@ -39,6 +39,7 @@ from PyQt6.QtWidgets import (
 
 from core.models.settings import ToleranceSettings
 from ui.config_models import WaveformSettings
+from ui.waveform.audio_loader import AudioLoader
 
 # Waveform display configuration defaults
 DEFAULT_OVERVIEW_POINTS = 2000  # Maximum points for waveform envelope
@@ -222,22 +223,20 @@ class WaveformEditorDialog(QDialog):
         start_time = time.time()
 
         try:
-            self._extract_wav()
+            loader = AudioLoader(self._zip_path, self._wav_filename)
+            # Extract WAV
+            self._temp_wav = loader.extract_wav()
             if not self._temp_wav:
                 raise FileNotFoundError("Temporary WAV file missing after extraction")
 
-            # Load full audio data for processing with progress feedback
+            # Load audio via AudioLoader
             load_start = time.time()
-            self._audio_data, self._sample_rate = sf.read(str(self._temp_wav), dtype="float32")
+            data, sr, duration = loader.load_audio_data(self._temp_wav)
             load_duration = time.time() - load_start
 
-            if self._audio_data.ndim > 1:
-                self._audio_data = self._audio_data.mean(axis=1)
-
-            if self._sample_rate <= 0 or self._audio_data.size == 0:
-                raise ValueError("Invalid audio data encountered")
-
-            self._duration_sec = self._audio_data.shape[0] / float(self._sample_rate)
+            self._audio_data = data
+            self._sample_rate = sr
+            self._duration_sec = duration
 
             # Render waveform on the primary plot
             self._render_waveform()
@@ -277,24 +276,9 @@ class WaveformEditorDialog(QDialog):
                 widget.setEnabled(False)
 
     def _extract_wav(self) -> None:
-        """Extract WAV file from ZIP archive to a temporary file."""
-        if not self._zip_path.exists():
-            raise FileNotFoundError(f"ZIP archive not found: {self._zip_path}")
-
-        with zipfile.ZipFile(self._zip_path, "r") as zf:
-            matching_entry: Optional[str] = None
-            for member in zf.namelist():
-                if member == self._wav_filename:
-                    matching_entry = member
-                    break
-
-            if not matching_entry:
-                raise FileNotFoundError(f"WAV file '{self._wav_filename}' not found in archive")
-
-            with zf.open(matching_entry) as wav_file:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
-                    shutil.copyfileobj(wav_file, temp_file)
-                    self._temp_wav = Path(temp_file.name)
+        """Backward-compat wrapper: delegate to AudioLoader."""
+        loader = AudioLoader(self._zip_path, self._wav_filename)
+        self._temp_wav = loader.extract_wav()
 
     def _render_waveform(self) -> None:
         """Render the waveform envelope on the primary plot."""
