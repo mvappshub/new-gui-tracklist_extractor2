@@ -34,7 +34,7 @@ class SettingsDialog(QDialog):
         scroll_area.setWidgetResizable(True)
         layout.addWidget(scroll_area)
 
-        self.settings_page = SettingsPage(app_config)
+        self.settings_page = SettingsPage(app_config, self.settings_filename, show_action_buttons=False)
         scroll_area.setWidget(self.settings_page)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)

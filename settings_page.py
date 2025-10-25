@@ -18,6 +18,8 @@ from PyQt6.QtWidgets import (
     QFrame,
 )
 
+from pathlib import Path
+
 from config import save_config, AppConfig
 
 
@@ -122,11 +124,19 @@ class FolderSettingCard(QWidget):
 class SettingsPage(QWidget):
     """Application settings interface."""
 
-    def __init__(self, app_config: AppConfig, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        app_config: AppConfig,
+        settings_filename: Path,
+        show_action_buttons: bool = True,
+        parent: QWidget | None = None,
+    ) -> None:
         super().__init__(parent)
         self.setObjectName("settingsPage")
         # Store injected configuration for future use
         self.cfg = app_config
+        self.settings_filename = settings_filename
+        self.show_action_buttons = show_action_buttons
 
         self._init_ui()
         self._sync_from_config()
@@ -394,6 +404,10 @@ class SettingsPage(QWidget):
         self.container_layout.addWidget(group)
 
     def _build_actions_group(self) -> None:
+        # Skip action buttons if embedded in dialog (dialog has its own buttons)
+        if not self.show_action_buttons:
+            return
+
         group = QGroupBox("Actions", self.container)
         group_layout = QVBoxLayout(group)
 
@@ -449,9 +463,7 @@ class SettingsPage(QWidget):
 
     def _save_settings(self) -> None:
         try:
-            from fluent_gui import SETTINGS_FILENAME
-
-            save_config(SETTINGS_FILENAME)
+            save_config(self.settings_filename)
             self._show_message("Settings saved", "Configuration saved successfully.", "info")
         except Exception as error:  # pragma: no cover - UI feedback path
             self._show_message("Save failed", str(error), "error")
@@ -478,9 +490,7 @@ class SettingsPage(QWidget):
             return
 
         self.cfg.reset_to_defaults()
-        from fluent_gui import SETTINGS_FILENAME
-
-        save_config(SETTINGS_FILENAME)
+        save_config(self.settings_filename)
 
         try:
             self.cfg.save()
