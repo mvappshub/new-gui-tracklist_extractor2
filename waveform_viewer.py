@@ -40,7 +40,7 @@ from PyQt6.QtWidgets import (
 from core.models.settings import ToleranceSettings
 from ui.config_models import WaveformSettings
 from ui.waveform.audio_loader import AudioLoader
-from ui.waveform.utils import TimeAxisItem as UtilsTimeAxisItem, create_envelope, format_mmss, format_mmss_with_fraction
+from ui.waveform.utils import TimeAxisItem, create_envelope, format_mmss, format_mmss_with_fraction
 from ui.waveform.plot_controller import WaveformPlotController
 from ui.waveform.playback_controller import PlaybackController
 
@@ -50,10 +50,6 @@ MIN_REGION_DURATION = 0.3  # Minimum region duration in seconds
 DEFAULT_SNAP_TOLERANCE = 0.1  # Default snap tolerance in seconds
 RMS_WINDOW_SIZE = 0.1  # RMS calculation window in seconds
 INITIAL_DETAIL_DURATION = 10.0  # Initial detail view duration in seconds
-
-
-class TimeAxisItem(UtilsTimeAxisItem):
-    pass
 
 
 class WaveformEditorDialog(QDialog):
