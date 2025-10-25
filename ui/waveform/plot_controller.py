@@ -32,6 +32,7 @@ class WaveformPlotController(QObject):
         self._duration_sec: float = 0.0
         self._pdf_markers: List[pg.InfiniteLine] = []
         self._marker_times: List[float] = []
+        self._playhead_line: Optional[pg.InfiniteLine] = None
 
     # ------------ Rendering ------------
     def render_waveform(self, audio: np.ndarray, sample_rate: int, overview_points: int) -> None:
@@ -43,6 +44,8 @@ class WaveformPlotController(QObject):
         if self._waveform_curve is None:
             self._waveform_curve = self.plot_widget.plot(pen=pg.mkPen("#3B82F6", width=1))
         self._waveform_curve.setData(env[:, 0], env[:, 1])
+        # ensure bottom label
+        self.plot_widget.setLabel("bottom", "Time", units="s")
 
     # ------------ Region Selection ------------
     def setup_region_selection(
@@ -300,3 +303,13 @@ class WaveformPlotController(QObject):
 
     def markers(self) -> List[pg.InfiniteLine]:
         return list(self._pdf_markers)
+
+    # ------------ Playhead ------------
+    def update_playhead(self, position_sec: float) -> None:
+        if not self.plot_widget:
+            return
+        if self._playhead_line is None:
+            self._playhead_line = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen("#EF4444", width=2))
+            self.plot_widget.addItem(self._playhead_line)
+            self._playhead_line.setZValue(3)
+        self._playhead_line.setPos(float(max(0.0, position_sec)))

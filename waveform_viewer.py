@@ -41,6 +41,8 @@ from core.models.settings import ToleranceSettings
 from ui.config_models import WaveformSettings
 from ui.waveform.audio_loader import AudioLoader
 from ui.waveform.utils import TimeAxisItem as UtilsTimeAxisItem, create_envelope, format_mmss, format_mmss_with_fraction
+from ui.waveform.plot_controller import WaveformPlotController
+from ui.waveform.playback_controller import PlaybackController
 
 # Waveform display configuration defaults
 DEFAULT_OVERVIEW_POINTS = 2000  # Maximum points for waveform envelope
@@ -74,13 +76,11 @@ class WaveformEditorDialog(QDialog):
 
         # Waveform plot and overlays
         self.plot_widget: Optional[pg.PlotWidget] = None
-        self._waveform_curve: Optional[pg.PlotDataItem] = None
 
-        # Region selection
-        self._region_item: Optional[pg.LinearRegionItem] = None
-        self._region_bounds = (0.0, 1.0)  # seconds
-
-        # PDF markers
+        # Mediator components
+        self._audio_loader: Optional[AudioLoader] = None
+        self._plot_controller: Optional[WaveformPlotController] = None
+        self._playback_controller: Optional[PlaybackController] = None
         self._pdf_markers: List[pg.InfiniteLine] = []
         self._marker_times: List[float] = []
         self._pdf_tracks: List[Dict] = []  # Store PDF track data
@@ -108,14 +108,11 @@ class WaveformEditorDialog(QDialog):
             )
             raise RuntimeError("Qt Multimedia module not available") from _MULTIMEDIA_IMPORT_ERROR
 
-        self._player = QMediaPlayer(self)
-        self._audio_output = QAudioOutput(self)
-        self._player.setAudioOutput(self._audio_output)
-
-        volume_value = max(0.0, min(1.0, float(waveform_settings.default_volume)))
-        self._audio_output.setVolume(max(0.0, min(1.0, volume_value)))
+        # Instantiate mediator components
+        self._playback_controller = PlaybackController(self)
 
         self._init_ui()
+        self._init_mediator()
         self._load_audio_data()
 
     def _init_ui(self) -> None:
@@ -169,7 +166,7 @@ class WaveformEditorDialog(QDialog):
 
         main_layout.addLayout(controls_layout)
 
-        # Transport controls (same as original)
+        # Transport controls
         transport_layout = QHBoxLayout()
         self.play_button = QPushButton("Play", self)
         self.pause_button = QPushButton("Pause", self)
@@ -179,13 +176,13 @@ class WaveformEditorDialog(QDialog):
         transport_layout.addWidget(self.stop_button)
         transport_layout.addStretch()
 
-        self.play_button.clicked.connect(self._handle_play)
-        self.pause_button.clicked.connect(self._handle_pause)
-        self.stop_button.clicked.connect(self._handle_stop)
+        self.play_button.clicked.connect(lambda: self._playback_controller and self._playback_controller.play())
+        self.pause_button.clicked.connect(lambda: self._playback_controller and self._playback_controller.pause())
+        self.stop_button.clicked.connect(lambda: self._playback_controller and self._playback_controller.stop())
 
         main_layout.addLayout(transport_layout)
 
-        # Position slider (same as original)
+        # Position slider
         slider_layout = QHBoxLayout()
         self.time_current = QLabel("00:00.0", self)
         self.position_slider = QSlider(Qt.Orientation.Horizontal, self)
@@ -199,11 +196,6 @@ class WaveformEditorDialog(QDialog):
         self.position_slider.sliderPressed.connect(self._on_slider_pressed)
         self.position_slider.sliderReleased.connect(self._on_slider_released)
         self.position_slider.sliderMoved.connect(self._on_slider_moved)
-
-        # Wire up player signals
-        self._player.positionChanged.connect(self._on_position_changed)
-        self._player.durationChanged.connect(self._on_duration_changed)
-        self._player.errorOccurred.connect(self._on_player_error)
 
     def _load_audio_data(self) -> None:
         """Load and process audio data for the waveform view."""
@@ -227,17 +219,30 @@ class WaveformEditorDialog(QDialog):
             self._sample_rate = sr
             self._duration_sec = duration
 
-            # Render waveform on the primary plot
-            self._render_waveform()
+            # Render waveform via controller
+            if self._plot_controller and self.plot_widget is not None:
+                self._plot_controller.render_waveform(self._audio_data, self._sample_rate, self._overview_points)
+                self._plot_controller.setup_region_selection(
+                    duration_sec=self._duration_sec,
+                    initial_region=(0.0, min(1.0, self._duration_sec)),
+                    min_region_duration=self._min_region_duration,
+                    snapping_enabled=self._snapping_enabled,
+                    audio=self._audio_data,
+                    sample_rate=self._sample_rate,
+                    snap_tolerance=self._snap_tolerance,
+                )
 
-            # Setup region selection
-            self._setup_region_selection()
+            # Setup player source
+            if self._playback_controller is not None and self._temp_wav is not None:
+                self._playback_controller.set_source_local_file(str(self._temp_wav))
 
-            # Apply axis limits after region creation
-            self._apply_view_limits()
-
-            # Setup player
-            self._player.setSource(QUrl.fromLocalFile(str(self._temp_wav)))
+            # Initialize slider range and labels based on known duration
+            total_ms = int(self._duration_sec * 1000)
+            self.position_slider.setRange(0, total_ms)
+            self.time_total.setText(self._format_time(self._duration_sec))
+            self.time_current.setText(self._format_time(0.0))
+            if self._plot_controller:
+                self._plot_controller.update_playhead(0.0)
 
             total_duration = time.time() - start_time
             logging.info(
@@ -314,65 +319,12 @@ class WaveformEditorDialog(QDialog):
         return create_envelope(data, sample_rate, max_points=max_points)
 
     def _setup_region_selection(self) -> None:
-        """Setup interactive region selection."""
-        if not self.plot_widget:
-            return
-
-        # Create linear region for selection
-        self._region_item = pg.LinearRegionItem(values=[0.0, 1.0], bounds=[0.0, self._duration_sec])
-
-        # Style the region
-        region_color = pg.mkBrush("#3B82F640")  # Semi-transparent blue
-        self._region_item.setBrush(region_color)
-        self._region_item.setMovable(True)
-
-        # Connect region changes
-        self._region_item.sigRegionChanged.connect(self._on_region_changed)
-
-        self.plot_widget.addItem(self._region_item)
-        self._region_item.setZValue(1)
-
-        # Set initial region (first 1 second)
-        initial_duration = min(1.0, self._duration_sec)
-        self._region_item.setRegion([0.0, initial_duration])
-        self._region_bounds = (0.0, initial_duration)
-        self._update_region_label()
+        """Deprecated: region selection is handled by WaveformPlotController."""
+        pass
 
     def _on_region_changed(self) -> None:
-        """Handle region selection changes with snap functionality."""
-        if not self._region_item or self._audio_data is None:
-            return
-
-        min_val, max_val = self._region_item.getRegion()
-
-        # Check if snapping is enabled in settings
-        if self._snapping_enabled:
-            # Apply snap to audio features (RMS peaks and zero crossings)
-            snapped_min, snapped_max = self._snap_region_to_audio(min_val, max_val)
-        else:
-            # Use original values when snapping is disabled
-            snapped_min, snapped_max = min_val, max_val
-
-        # Enforce minimum region size (0.3 seconds)
-        min_region = max(0.0, float(self._min_region_duration))
-        if snapped_max - snapped_min < min_region:
-            if min_val == self._region_bounds[0]:
-                snapped_max = snapped_min + min_region
-            else:
-                snapped_min = snapped_max - min_region
-
-        # Ensure region stays within bounds
-        snapped_min = max(0.0, snapped_min)
-        snapped_max = min(self._duration_sec, snapped_max)
-
-        # Update region if snapping occurred
-        if abs(min_val - snapped_min) > 0.01 or abs(max_val - snapped_max) > 0.01:
-            self._region_item.setRegion([snapped_min, snapped_max])
-
-        self._region_bounds = (snapped_min, snapped_max)
-
-        # Update region label
-        self._update_region_label()
+        """Deprecated: handled by PlotController; mediator listens to its signal."""
+        pass
 
     def _snap_region_to_audio(self, min_val: float, max_val: float) -> Tuple[float, float]:
         """Snap region boundaries to audio features (RMS peaks and zero crossings)."""
@@ -498,80 +450,18 @@ class WaveformEditorDialog(QDialog):
         wav_tracks: List[Dict],
         tolerance_settings: ToleranceSettings,
     ) -> None:
-        """Set PDF track markers with tolerance-based coloring."""
+        """Set PDF track markers (delegates to PlotController, mirrors internal state for tests)."""
         self._pdf_tracks = pdf_tracks
-
-        # Clear existing markers
-        self._clear_pdf_markers()
-
-        if not pdf_tracks or not self.plot_widget:
-            return
-
-        tolerance_warn = float(tolerance_settings.warn_tolerance)
-        tolerance_fail = float(tolerance_settings.fail_tolerance)
-
-        # Collect PDF durations and labels
-        pdf_durations: List[float] = []
-        pdf_labels: List[str] = []
-        for index, pdf_track in enumerate(pdf_tracks, start=1):
-            if hasattr(pdf_track, "duration_sec"):
-                duration = float(getattr(pdf_track, "duration_sec", 0.0))
-                label = getattr(pdf_track, "label", f"PDF {index}")
-            else:
-                duration = float(pdf_track.get("duration_sec", 0.0))
-                label = str(pdf_track.get("label", f"PDF {index}"))
-            pdf_durations.append(max(0.0, duration))
-            pdf_labels.append(label)
-
-        if not pdf_durations:
-            return
-
-        pdf_end_times = np.cumsum(pdf_durations)
-
-        # Collect WAV cumulative ends for delta computation
-        wav_durations: List[float] = []
-        for wav_track in wav_tracks:
-            if hasattr(wav_track, "duration_sec"):
-                wav_durations.append(max(0.0, float(getattr(wav_track, "duration_sec", 0.0))))
-            else:
-                wav_durations.append(max(0.0, float(wav_track.get("duration_sec", 0.0))))
-        wav_end_times = np.cumsum(wav_durations) if wav_durations else []
-
-        for idx, end_time in enumerate(pdf_end_times):
-            delta_t = 0.0
-            if idx < len(wav_end_times):
-                delta_t = wav_end_times[idx] - end_time
-
-            # Determine marker color based on tolerance
-            if abs(delta_t) <= tolerance_warn:
-                color = "#10B981"  # Green (OK)
-            elif abs(delta_t) <= tolerance_fail:
-                color = "#F59E0B"  # Yellow (WARN)
-            else:
-                color = "#EF4444"  # Red (FAIL)
-
-            # Create vertical line marker
-            marker = pg.InfiniteLine(
-                pos=end_time,
-                angle=90,
-                pen=pg.mkPen(color, width=2, style=pg.QtCore.Qt.PenStyle.DashLine),
-                movable=False,
-            )
-
-            marker.setToolTip(
-                f"{pdf_labels[idx]} - {self._format_mmss(end_time)} " f"(delta {self._format_delta(delta_t)})"
-            )
-            marker.setZValue(2)
-
-            self.plot_widget.addItem(marker)
-            self._pdf_markers.append(marker)
-            self._marker_times.append(end_time)
+        if self._plot_controller:
+            self._plot_controller.set_pdf_markers(pdf_tracks, wav_tracks, tolerance_settings)
+            # Mirror controller state for backward-compatible tests
+            self._pdf_markers = self._plot_controller.markers()
+            self._marker_times = self._plot_controller.marker_times()
 
     def _clear_pdf_markers(self) -> None:
         """Remove all PDF markers from the plot."""
-        if self.plot_widget:
-            for marker in self._pdf_markers:
-                self.plot_widget.removeItem(marker)
+        if self._plot_controller:
+            self._plot_controller.clear_pdf_markers()
         self._pdf_markers.clear()
         self._marker_times.clear()
 
@@ -651,31 +541,17 @@ class WaveformEditorDialog(QDialog):
         self.plot_widget.setXRange(start, end, padding=0)
 
     def _on_position_changed(self, position_ms: int) -> None:
-        """Update position indicators when player position changes."""
+        """Mediator response to playback position changes: update labels and playhead."""
         position_sec = position_ms / 1000.0
-
-        # Update time label
         self.time_current.setText(self._format_time(position_sec))
-
-        # Update position line on the plot
-        if self.plot_widget:
-            if self._playhead_line is None:
-                self._playhead_line = pg.InfiniteLine(
-                    angle=90,
-                    movable=False,
-                    pen=pg.mkPen("#EF4444", width=2),
-                )
-                self.plot_widget.addItem(self._playhead_line)
-                self._playhead_line.setZValue(3)
-            self._playhead_line.setPos(position_sec)
+        if self._plot_controller:
+            self._plot_controller.update_playhead(position_sec)
 
     def _on_duration_changed(self, duration_ms: int) -> None:
-        """Handle player duration updates."""
-        if duration_ms <= 0:
-            return
-        self._duration_ms = duration_ms
-        self.position_slider.setRange(0, duration_ms)
-        self.time_total.setText(self._format_time(duration_ms / 1000.0))
+        """Deprecated: duration is initialized after load by mediator."""
+        if duration_ms > 0:
+            self.position_slider.setRange(0, int(duration_ms))
+            self.time_total.setText(self._format_time(duration_ms / 1000.0))
 
     def _on_slider_pressed(self) -> None:
         """Pause position updates while scrubbing."""
@@ -684,7 +560,8 @@ class WaveformEditorDialog(QDialog):
     def _on_slider_released(self) -> None:
         """Apply slider position when released."""
         new_position = self.position_slider.value()
-        self._player.setPosition(new_position)
+        if self._playback_controller:
+            self._playback_controller.set_position(new_position)
         self._slider_updating = False
 
     def _on_slider_moved(self, position_ms: int) -> None:
@@ -693,17 +570,20 @@ class WaveformEditorDialog(QDialog):
         self.time_current.setText(self._format_time(position_sec))
 
     def _handle_play(self) -> None:
-        """Start playback."""
-        self._player.play()
+        """Deprecated: wired directly to PlaybackController."""
+        if self._playback_controller:
+            self._playback_controller.play()
 
     def _handle_pause(self) -> None:
-        """Pause playback."""
-        self._player.pause()
+        """Deprecated: wired directly to PlaybackController."""
+        if self._playback_controller:
+            self._playback_controller.pause()
 
     def _handle_stop(self) -> None:
-        """Stop playback and reset position."""
-        self._player.stop()
-        self._on_position_changed(0)
+        """Deprecated: wired directly to PlaybackController."""
+        if self._playback_controller:
+            self._playback_controller.stop()
+            self._on_position_changed(0)
 
     def _on_player_error(self, _error, error_string: str) -> None:
         """Log playback errors."""
@@ -720,9 +600,10 @@ class WaveformEditorDialog(QDialog):
         return f"{minutes:02d}:{secs:02.1f}"
 
     def closeEvent(self, event) -> None:
-        """Clean up resources."""
+        """Clean up resources via mediator."""
         try:
-            self._player.stop()
+            if self._playback_controller:
+                self._playback_controller.stop()
         finally:
             if self._temp_wav and self._temp_wav.exists():
                 try:
@@ -731,6 +612,25 @@ class WaveformEditorDialog(QDialog):
                     logging.warning("Failed to remove temporary WAV file: %s", exc)
             self._temp_wav = None
         super().closeEvent(event)
+
+    def _init_mediator(self) -> None:
+        """Create plot controller and wire signals between components."""
+        if self.plot_widget is None:
+            return
+        self._plot_controller = WaveformPlotController(self.plot_widget)
+        # Region change -> set player position to region start
+        self._plot_controller.region_changed.connect(
+            lambda start, end: self._on_region_changed_mediator(start, end)
+        )
+        # Playback position -> update labels/playhead
+        if self._playback_controller is not None:
+            self._playback_controller.position_changed.connect(self._on_position_changed)
+
+    def _on_region_changed_mediator(self, start: float, end: float) -> None:
+        self._region_bounds = (start, end)
+        self._update_region_label()
+        if self._playback_controller is not None:
+            self._playback_controller.set_position(int(max(0.0, start) * 1000))
 
 
 class WaveformViewerDialog(QDialog):
