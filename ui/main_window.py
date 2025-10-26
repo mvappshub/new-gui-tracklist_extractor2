@@ -387,81 +387,11 @@ class MainWindow(QMainWindow):
         if icon is None or (hasattr(icon, "isNull") and icon.isNull()):
             return
 
-        current_top_index = self.top_table.currentIndex()
-        result = self.top_model.get_result(current_top_index.row()) if current_top_index.isValid() else None
-        if not result:
-            return
-
-        if index.row() >= len(result.pdf_tracks):
-            return
-
-        wav_track = None
-        if result.mode == "tracks":
-            if index.row() < len(result.wav_tracks):
-                wav_track = result.wav_tracks[index.row()]
-        else:
-            if result.wav_tracks:
-                wav_track = result.wav_tracks[0]
-
-        if not wav_track or not wav_track.filename:
-            self._show_safe_message_box(
-                "Waveform Unavailable",
-                "No WAV track is available for waveform preview.",
-                QMessageBox.Icon.Information,
-            )
-            return
-
-        if not result.zip_path or not result.zip_path.exists():
-            self._show_safe_message_box(
-                "Missing ZIP",
-                "The associated ZIP archive could not be found on disk.",
-                QMessageBox.Icon.Warning,
-            )
-            return
-
-        try:
-            from waveform_viewer import WaveformEditorDialog
-        except ImportError as exc:
-            logging.error("Waveform editor dependencies missing: %s", exc, exc_info=True)
-            self._show_safe_message_box(
-                "Waveform Editor Unavailable",
-                "Waveform editor requires optional dependencies (pyqtgraph, soundfile). "
-                "Install them to enable waveform editing.",
-                QMessageBox.Icon.Warning,
-            )
-            return
-
-        try:
-            pdf_tracks = []
-            wav_tracks = []
-            if result.mode == "tracks":
-                pdf_tracks = result.pdf_tracks
-                wav_tracks = result.wav_tracks
-            else:
-                if result.pdf_tracks:
-                    pdf_tracks = result.pdf_tracks
-                if result.wav_tracks:
-                    wav_tracks = result.wav_tracks
-
-            dialog = WaveformEditorDialog(
-                result.zip_path,
-                wav_track.filename,
-                waveform_settings=self.waveform_settings,
-                parent=self,
-            )
-            dialog.set_pdf_tracks(
-                pdf_tracks,
-                wav_tracks,
-                self.tolerance_settings,
-            )
-            dialog.exec()
-        except Exception as exc:
-            logging.error("Failed to open waveform viewer: %s", exc, exc_info=True)
-            self._show_safe_message_box(
-                "Waveform Error",
-                f"Could not open waveform viewer.\n\nError: {exc}",
-                QMessageBox.Icon.Warning,
-            )
+        self._show_safe_message_box(
+            "Waveform Viewer Removed",
+            "Waveform visualisation is no longer available in this build.",
+            QMessageBox.Icon.Information,
+        )
 
     def open_settings(self):
         try:
