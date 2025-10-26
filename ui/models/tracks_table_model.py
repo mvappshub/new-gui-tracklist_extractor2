@@ -121,6 +121,45 @@ class TracksTableModel(QAbstractTableModel):
         if role == Qt.ItemDataRole.ToolTipRole and column == 7 and not is_total_row:
             return "View waveform"
 
+        if role == Qt.ItemDataRole.ToolTipRole:
+            if is_total_row:
+                summaries = {
+                    1: self._data.wav_tracks[0].filename if self._data and self._data.wav_tracks else LABEL_TOTAL_TRACKS,
+                    2: f"{len(self._data.pdf_tracks)} tracks" if self._data else "",
+                    3: f"{self._data.total_pdf_sec // 60:02d}:{self._data.total_pdf_sec % 60:02d}" if self._data else "",
+                    4: f"{int(self._data.total_wav_sec) // 60:02d}:{int(self._data.total_wav_sec) % 60:02d}" if self._data else "",
+                    5: f"{self._data.total_difference:+.0f}" if self._data else "",
+                }
+                return summaries.get(column)
+            else:
+                if column == 1:
+                    if self._data.mode == "tracks":
+                        wav_track = self._data.wav_tracks[row] if row < len(self._data.wav_tracks) else None
+                        return wav_track.filename if wav_track else PLACEHOLDER_DASH
+                    if self._data.wav_tracks:
+                        return self._data.wav_tracks[0].filename
+                    return PLACEHOLDER_DASH
+                if column == 2:
+                    pdf_track = self._data.pdf_tracks[row] if row < len(self._data.pdf_tracks) else None
+                    return pdf_track.title if pdf_track else PLACEHOLDER_DASH
+                if column == 3:
+                    pdf_track = self._data.pdf_tracks[row] if row < len(self._data.pdf_tracks) else None
+                    if pdf_track:
+                        return f"{pdf_track.duration_sec // 60:02d}:{pdf_track.duration_sec % 60:02d}"
+                if column == 4:
+                    if self._data.mode == "tracks":
+                        wav_track = self._data.wav_tracks[row] if row < len(self._data.wav_tracks) else None
+                        if wav_track:
+                            return f"{int(wav_track.duration_sec) // 60:02d}:{int(wav_track.duration_sec) % 60:02d}"
+                if column == 5:
+                    if self._data.mode == "tracks":
+                        wav_track = self._data.wav_tracks[row] if row < len(self._data.wav_tracks) else None
+                        pdf_track = self._data.pdf_tracks[row] if row < len(self._data.pdf_tracks) else None
+                        if wav_track and pdf_track:
+                            difference = wav_track.duration_sec - pdf_track.duration_sec
+                            return f"{difference:+.0f}"
+                    return PLACEHOLDER_DASH
+
         if role == Qt.ItemDataRole.DisplayRole:
             if is_total_row:
                 return self.get_total_row_data(column)

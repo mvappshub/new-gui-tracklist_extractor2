@@ -25,6 +25,7 @@ def theme_settings():
         claim_text="Emotions. Materialized.",
         action_bg_color="#E0E7FF",
         total_row_bg_color="#F3F4F6",
+        theme_variant="light",
     )
 
 

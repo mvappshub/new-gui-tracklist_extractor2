@@ -2,6 +2,7 @@ from core.models.settings import ExportSettings, IdExtractionSettings, Tolerance
 
 from .constants import *
 from .theme import get_system_file_icon, get_custom_icon, get_gz_color, load_gz_media_fonts, load_gz_media_stylesheet
+from .components import ModernTableView, EmptyStateOverlay
 from .models.results_table_model import ResultsTableModel
 from .models.tracks_table_model import TracksTableModel
 from .workers.analysis_worker import AnalysisWorker
@@ -61,6 +62,9 @@ __all__ = [
     "get_gz_color",
     "load_gz_media_fonts",
     "load_gz_media_stylesheet",
+    # Components
+    "ModernTableView",
+    "EmptyStateOverlay",
     # Models
     "ResultsTableModel",
     "TracksTableModel",

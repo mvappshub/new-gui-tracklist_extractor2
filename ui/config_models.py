@@ -32,6 +32,7 @@ class ThemeSettings:
     claim_text: str
     action_bg_color: str
     total_row_bg_color: str
+    theme_variant: str
 
 
 @dataclass
@@ -119,6 +120,28 @@ def load_theme_settings(cfg: AppConfig) -> ThemeSettings:
     logo_attr = getattr(cfg, "gz_logo_path", None)
     logo_path = Path(getattr(logo_attr, "value", "assets/gz_logo_white.png"))
 
+    def _detect_auto_theme() -> str:
+        try:
+            from PyQt6.QtGui import QPalette
+            from PyQt6.QtWidgets import QApplication
+        except Exception:
+            return "light"
+
+        app = QApplication.instance()
+        if app is None:
+            return "light"
+
+        palette = app.palette()
+        window_color = palette.color(QPalette.ColorRole.Window)
+        text_color = palette.color(QPalette.ColorRole.WindowText)
+        try:
+            if window_color.lightnessF() < text_color.lightnessF():
+                return "dark"
+        except AttributeError:
+            if window_color.value() < text_color.value():
+                return "dark"
+        return "light"
+
     claim_visible_attr = getattr(cfg, "gz_claim_visible", None)
     claim_visible = bool(getattr(claim_visible_attr, "value", True))
 
@@ -129,6 +152,15 @@ def load_theme_settings(cfg: AppConfig) -> ThemeSettings:
     action_bg_color = getattr(action_color_attr, "value", "#E0E7FF")
 
     total_row_bg_color = cfg.get("ui/total_row_bg_color", "#F3F4F6")
+
+    raw_theme = str(getattr(cfg.ui_theme, "value", "") or "").strip().lower()
+    theme_map = {"dark": "dark", "light": "light"}
+    if raw_theme in theme_map:
+        theme_variant = theme_map[raw_theme]
+    elif raw_theme == "auto":
+        theme_variant = _detect_auto_theme()
+    else:
+        theme_variant = "light"
 
     return ThemeSettings(
         font_family=cfg.ui_base_font_family.value,
@@ -144,6 +176,7 @@ def load_theme_settings(cfg: AppConfig) -> ThemeSettings:
         claim_text=claim_text,
         action_bg_color=action_bg_color,
         total_row_bg_color=total_row_bg_color,
+        theme_variant=theme_variant,
     )
 
 

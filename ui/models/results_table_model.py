@@ -96,9 +96,18 @@ class ResultsTableModel(QAbstractTableModel):
                 return Qt.AlignmentFlag.AlignCenter
             return Qt.AlignmentFlag.AlignLeft
 
-        if role == Qt.ItemDataRole.ToolTipRole and column == 1:
-            return f"PDF: {result.pdf_path}\nZIP: {result.zip_path if result.zip_path else '-'}"
         if role == Qt.ItemDataRole.ToolTipRole:
+            if column == 1:
+                zip_value = result.zip_path if result.zip_path else "-"
+                return f"PDF: {result.pdf_path}\nZIP: {zip_value}"
+            if column == 2:
+                return f"Side: {result.side}"
+            if column == 3:
+                return f"Mode: {result.mode}"
+            if column == 4:
+                return f"Total length: {result.total_pdf_sec // 60:02d}:{result.total_pdf_sec % 60:02d}"
+            if column == 5:
+                return f"Status: {result.status}"
             if column == 6 and result.pdf_path:
                 return "Open PDF file"
             if column == 7 and result.zip_path:

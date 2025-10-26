@@ -1,0 +1,66 @@
+ModernTableView {
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    background: #FFFFFF;
+    alternate-background-color: #F9FAFB;
+    gridline-color: #E5E7EB;
+    selection-background-color: #2563EB;
+    selection-color: #FFFFFF;
+}
+
+ModernTableView::item {
+    padding: 6px;
+}
+
+ModernTableView::item:hover {
+    background-color: #EEF2FF;
+}
+
+ModernTableView::item:selected:active {
+    background-color: #2563EB;
+    color: #FFFFFF;
+}
+
+ModernTableView::item:selected:!active {
+    background-color: #BFDBFE;
+    color: #1F2937;
+}
+
+ModernTableView:focus {
+    border: 2px solid #2563EB;
+}
+
+ModernTableView[theme="dark"] {
+    background: #1F2937;
+    color: #F9FAFB;
+    border: 1px solid #374151;
+    gridline-color: #4B5563;
+    alternate-background-color: #111827;
+}
+
+ModernTableView[theme="dark"]::item:hover {
+    background-color: #1E3A8A;
+}
+
+ModernTableView[theme="dark"]::item:selected:active {
+    background-color: #2563EB;
+    color: #F9FAFB;
+}
+
+ModernTableView[theme="dark"]::item:selected:!active {
+    background-color: #1E3A8A;
+    color: #F9FAFB;
+}
+
+#EmptyStateOverlay {
+    color: #6B7280;
+    font-size: 10pt;
+}
+
+#EmptyStateOverlayIcon {
+    margin-bottom: 6px;
+}
+
+#EmptyStateOverlay[theme="dark"] {
+    color: #E5E7EB;
+}

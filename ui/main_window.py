@@ -8,6 +8,7 @@ from PyQt6.QtCore import QEvent, QModelIndex, QSize, Qt, QTimer, QUrl
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QApplication,
     QComboBox,
     QHBoxLayout,
     QHeaderView,
@@ -18,7 +19,6 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QSizePolicy,
     QSplitter,
-    QTableView,
     QToolBar,
     QVBoxLayout,
     QWidget,
@@ -31,6 +31,7 @@ from ui.config_models import ThemeSettings, WaveformSettings
 from ui.constants import *
 from ui.delegates.action_cell_delegate import ActionCellDelegate
 from ui.dialogs.settings_dialog import SettingsDialog
+from ui.components import ModernTableView
 from ui.models.results_table_model import ResultsTableModel
 from ui.models.tracks_table_model import TracksTableModel
 from ui.workers.worker_manager import AnalysisWorkerManager
@@ -136,19 +137,21 @@ class MainWindow(QMainWindow):
 
         splitter = QSplitter(Qt.Orientation.Vertical)
 
-        self.top_table = QTableView()
+        self.top_table = ModernTableView()
         self.top_model = ResultsTableModel(theme_settings=self.theme_settings)
         self.top_table.setModel(self.top_model)
         try:
             self.top_table.setIconSize(QSize(16, 16))
         except Exception:
             pass
+        self.top_table.set_empty_state(text="No analysis results yet")
 
-        self.bottom_table = QTableView()
+        self.bottom_table = ModernTableView()
         self.bottom_model = TracksTableModel(
             tolerance_settings=self.tolerance_settings, theme_settings=self.theme_settings
         )
         self.bottom_table.setModel(self.bottom_model)
+        self.bottom_table.set_empty_state(text="Select a result to view track details")
 
         splitter.addWidget(self.top_table)
         splitter.addWidget(self.bottom_table)
@@ -157,31 +160,34 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(central)
 
+        self._load_table_stylesheet()
+        self._apply_theme_properties()
         self.setup_tables()
+        self._restored_table_state = False
+        self._restore_table_state()
         self.connect_signals()
 
         self._auto_resize_pending = False
 
         def _apply_header_resizes():
-            if not hasattr(self, "top_table") or not hasattr(self, "bottom_table"):
-                return
-
-            h_header = self.top_table.horizontalHeader()
-            for col in (0, 2, 3, 4, 5, 6, 7):
-                h_header.resizeSection(col, self.top_table.sizeHintForColumn(col))
-
-            h_header_b = self.bottom_table.horizontalHeader()
-            for col in (0, 3, 4, 5, 6):
-                h_header_b.resizeSection(col, self.bottom_table.sizeHintForColumn(col))
+            self._apply_table_layouts()
 
         def _schedule_header_resizes():
             if self._auto_resize_pending:
                 return
             self._auto_resize_pending = True
-            QTimer.singleShot(0, lambda: (setattr(self, "_auto_resize_pending", False), _apply_header_resizes()))
+
+            def _runner():
+                try:
+                    _apply_header_resizes()
+                finally:
+                    self._auto_resize_pending = False
+
+            QTimer.singleShot(0, _runner)
 
         self._schedule_header_resizes = _schedule_header_resizes  # type: ignore[assignment]
         self.top_model._schedule_header_resizes = _schedule_header_resizes  # type: ignore[attr-defined]
+        self._schedule_header_resizes()
 
         if self.windowHandle() is not None:
 
@@ -209,45 +215,20 @@ class MainWindow(QMainWindow):
     def setup_tables(self):
         self.top_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.top_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
-        self.top_table.setMouseTracking(True)
-        self.bottom_table.setMouseTracking(True)
+        self.bottom_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.bottom_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
 
-        h_header = self.top_table.horizontalHeader()
-        h_header.setStretchLastSection(False)
-        h_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        h_header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        h_header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        h_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        h_header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
-        h_header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
-        h_header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
-        h_header.setSectionResizeMode(7, QHeaderView.ResizeMode.Fixed)
-        self.top_table.setColumnWidth(6, 60)
-        self.top_table.setColumnWidth(7, 60)
+        header_top = self.top_table.horizontalHeader()
+        top_font = header_top.font()
+        top_font.setBold(True)
+        header_top.setFont(top_font)
 
-        bold = h_header.font()
-        bold.setBold(True)
-        h_header.setFont(bold)
+        header_bottom = self.bottom_table.horizontalHeader()
+        bottom_font = header_bottom.font()
+        bottom_font.setBold(True)
+        header_bottom.setFont(bottom_font)
 
-        h_header_bottom = self.bottom_table.horizontalHeader()
-        bbold = h_header_bottom.font()
-        bbold.setBold(True)
-        h_header_bottom.setFont(bbold)
-        h_header_bottom.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        h_header_bottom.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        h_header_bottom.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        h_header_bottom.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        h_header_bottom.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
-        h_header_bottom.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
-        h_header_bottom.setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)
-        h_header_bottom.setSectionResizeMode(7, QHeaderView.ResizeMode.Stretch)
-        h_header_bottom.setStretchLastSection(True)
-        self.bottom_table.setColumnWidth(1, 200)
-
-        self.top_table.setTextElideMode(Qt.TextElideMode.ElideMiddle)
-        self.bottom_table.setTextElideMode(Qt.TextElideMode.ElideMiddle)
-        self.top_table.setAlternatingRowColors(True)
-        self.bottom_table.setAlternatingRowColors(True)
+        self._apply_table_layouts()
 
         # Install hover affordance delegates for action cells
         self.top_delegate = ActionCellDelegate(self.theme_settings, {6, 7})
@@ -256,6 +237,95 @@ class MainWindow(QMainWindow):
 
         self.bottom_delegate = ActionCellDelegate(self.theme_settings, {7})
         self.bottom_table.setItemDelegateForColumn(7, self.bottom_delegate)
+
+    def _apply_table_layouts(self):
+        try:
+            top_header = self.top_table.horizontalHeader()
+            top_header.setStretchLastSection(False)
+            if not getattr(self, "_restored_table_state", False):
+                self.top_table.resizeColumnsToContents()
+            for col in (0, 2, 3, 4, 5):
+                top_header.setSectionResizeMode(col, QHeaderView.ResizeMode.Interactive)
+            top_header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+            for col, width in ((6, 52), (7, 60)):
+                top_header.setSectionResizeMode(col, QHeaderView.ResizeMode.Fixed)
+                self.top_table.setColumnWidth(col, width)
+
+            bottom_header = self.bottom_table.horizontalHeader()
+            bottom_header.setStretchLastSection(False)
+            if not getattr(self, "_restored_table_state", False):
+                self.bottom_table.resizeColumnsToContents()
+            bottom_header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+            bottom_header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+            bottom_header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+            for col in (3, 4, 5):
+                bottom_header.setSectionResizeMode(col, QHeaderView.ResizeMode.Interactive)
+            for col, width in ((6, 48), (7, 60)):
+                bottom_header.setSectionResizeMode(col, QHeaderView.ResizeMode.Fixed)
+                self.bottom_table.setColumnWidth(col, width)
+        except Exception as exc:
+            logging.exception("Failed to apply table layouts: %s", exc)
+
+    def _load_table_stylesheet(self) -> None:
+        try:
+            tables_path = Path(__file__).resolve().parent.parent / "assets" / "stylesheets" / "tables.qss"
+            if not tables_path.exists():
+                logging.warning("Tables stylesheet not found at %s", tables_path)
+                return
+
+            qapp = QApplication.instance()
+            if qapp is None:
+                return
+
+            stylesheet = tables_path.read_text(encoding="utf-8")
+            current = qapp.styleSheet() or ""
+            if stylesheet and stylesheet not in current:
+                combined = f"{current}\n{stylesheet}" if current else stylesheet
+                qapp.setStyleSheet(combined)
+        except Exception as exc:
+            logging.error("Failed to load tables stylesheet: %s", exc)
+
+    def _derive_theme_variant(self) -> str:
+        try:
+            stylesheet_path = getattr(self.theme_settings, "stylesheet_path", None)
+            if stylesheet_path:
+                name = Path(stylesheet_path).stem.lower()
+                if "dark" in name:
+                    return "dark"
+        except Exception:
+            pass
+        return "light"
+
+    def _apply_theme_properties(self) -> None:
+        configured_variant = getattr(self.theme_settings, "theme_variant", "")
+        variant = configured_variant or self._derive_theme_variant()
+        self._theme_variant = variant
+        try:
+            self.setProperty("theme", variant)
+            style = self.style()
+            if style is not None:
+                style.unpolish(self)
+                style.polish(self)
+        except Exception as exc:
+            logging.debug("Failed to polish main window theme: %s", exc)
+
+        for table in (self.top_table, self.bottom_table):
+            if hasattr(table, "set_theme"):
+                try:
+                    table.set_theme(variant)
+                except Exception as exc:
+                    logging.debug("Failed to set table theme: %s", exc)
+
+    def _restore_table_state(self) -> None:
+        try:
+            settings = self.app_config.settings
+        except Exception as exc:
+            logging.debug("Table state could not access settings: %s", exc)
+            return
+
+        restored_results = self.top_table.restoreHeaderState("results-table", settings=settings)
+        restored_tracks = self.bottom_table.restoreHeaderState("tracks-table", settings=settings)
+        self._restored_table_state = restored_results or restored_tracks
 
     def connect_signals(self):
         self.run_button.clicked.connect(self.run_analysis)
@@ -303,6 +373,12 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         self.worker_manager.cleanup()
+        try:
+            settings = self.app_config.settings
+            self.top_table.saveHeaderState("results-table", settings=settings)
+            self.bottom_table.saveHeaderState("tracks-table", settings=settings)
+        except Exception as exc:
+            logging.debug("Failed to persist table state: %s", exc)
         super().closeEvent(event)
 
     def run_analysis(self):
