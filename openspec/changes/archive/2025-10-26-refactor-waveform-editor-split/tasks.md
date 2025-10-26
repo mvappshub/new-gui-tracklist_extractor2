@@ -1,0 +1,98 @@
+Execution Policy (MANDATORY)
+This policy overrides any other instruction. Non-compliance = stop work.
+1) Stop-the-line
+Jakmile selže cokoliv z níže uvedeného, okamžitě zastav práce, vrať poslední změny do zelené a teprve pak pokračuj:
+openspec validate <change> --strict
+pytest -q (doporučeno --maxfail=1)
+mypy --strict
+Žádné další úkoly se neprovádí, dokud nejsou všechny tři kontroly zelené.
+2) Zelená po blocích (gated workflow)
+Každá sekce v tasks.md (1., 2., 3., …) končí minimální sadou kontrol:
+openspec validate <change> --strict
+pytest -q
+mypy --strict
+
+Pokud je cokoliv červené, sekce je nehotová.
+3) Výjimky (omezené a dohledatelné)
+Flaky test: dočasně označ @pytest.mark.flaky(reruns=2) + popis důvodu a TODO v tasks.md.
+Změna chování: nejdřív uprav spec (ADDED/MODIFIED/REMOVED), pak testy, až poté kód.
+Karanténa: @pytest.mark.xfail(strict=True, reason="…", run=False) s datem odstranění.
+4) Commity (granulární a auditovatelné)
+1 podúkol = 1 commit. Formát Conventional Commits + OpenSpec tag:
+type(scope): stručný popis  [refs: #openspec-task:<ID>]
+
+Příklady:
+refactor(ui): SettingsPage přijímá AppConfig v ctor [refs: #openspec-task:1.1]
+test(tests): přidána AppConfig fixture [refs: #openspec-task:4.1]
+chore(openspec): validate refactor-config-decomposition --strict (pass) [refs: #openspec-task:5.1]
+5) Pre-push/CI brány (fail = žádný push/merge)
+Před každým pushem spusť lokálně:
+openspec validate <change> --strict && pytest -q && mypy --strict
+
+V CI nastav povinné kontroly:
+OpenSpec validate (strict)
+Pytest
+Mypy strict
+6) Definition of Done (celá změna)
+rg "from config import cfg" --type py (pro config změnu: výskyt pouze v entry pointech)
+openspec validate <change> --strict = green
+pytest = green
+mypy --strict = green
+Smoke skripty prošly (pokud jsou součástí projektu)
+
+# Tasks: Waveform Editor Split
+
+## 1. Preparation
+- [ ] 1.1 Vytvořit package `ui/waveform/` s `__init__.py`
+- [ ] 1.2 Přidat characterization testy pro WaveformEditorDialog před refaktoringem
+- [ ] 1.3 Dokumentovat současné chování a edge cases
+
+## 2. Create AudioLoader component
+- [ ] 2.1 Vytvořit `ui/waveform/audio_loader.py`
+- [ ] 2.2 Implementovat `AudioLoader` třídu s metodami `extract_wav()` a `load_audio_data()`
+- [ ] 2.3 Přesunout logiku z `_extract_wav()` a části `_load_audio_data()` z WaveformEditorDialog
+- [ ] 2.4 Přidat unit testy pro AudioLoader
+
+## 3. Create utility functions
+- [ ] 3.1 Vytvořit `ui/waveform/utils.py`
+- [ ] 3.2 Přesunout `_create_envelope()` jako standalone funkci
+- [ ] 3.3 Přesunout time formatting funkce (`_format_mmss`, `_format_mmss_with_fraction`)
+- [ ] 3.4 Přesunout `TimeAxisItem` třídu
+- [ ] 3.5 Přidat unit testy pro utility funkce
+
+## 4. Create WaveformPlotController component
+- [ ] 4.1 Vytvořit `ui/waveform/plot_controller.py`
+- [ ] 4.2 Implementovat `WaveformPlotController` s metodami pro rendering, region selection, PDF markers
+- [ ] 4.3 Přesunout logiku z `_render_waveform()`, `_setup_region_selection()`, `set_pdf_track_markers()`, zoom metod
+- [ ] 4.4 Implementovat signály pro komunikaci s Mediatorem (např. `region_changed`, `marker_clicked`)
+- [ ] 4.5 Přidat unit testy pro WaveformPlotController
+
+## 5. Create PlaybackController component
+- [ ] 5.1 Vytvořit `ui/waveform/playback_controller.py`
+- [ ] 5.2 Implementovat `PlaybackController` s QMediaPlayer management
+- [ ] 5.3 Přesunout logiku z `_handle_play()`, `_handle_pause()`, `_handle_stop()`, slider handlers
+- [ ] 5.4 Implementovat signály pro komunikaci s Mediatorem (např. `position_changed`, `playback_error`)
+- [ ] 5.5 Přidat unit testy pro PlaybackController
+
+## 6. Refactor WaveformEditorDialog to Mediator
+- [ ] 6.1 Aktualizovat `WaveformEditorDialog.__init__` pro vytvoření instancí komponent
+- [ ] 6.2 Připojit signály mezi komponentami přes Mediator
+- [ ] 6.3 Delegovat volání metod na příslušné komponenty
+- [ ] 6.4 Odstranit duplicitní kód, který byl přesunut do komponent
+- [ ] 6.5 Zachovat veřejné API (konstruktor, `set_pdf_track_markers()`, `closeEvent()`)
+
+## 7. Integration and Testing
+- [ ] 7.1 Spustit všechny existující testy: `pytest tests/test_waveform_editor.py`
+- [ ] 7.2 Spustit integration testy: `pytest tests/test_waveform_integration.py`
+- [ ] 7.3 Manuální testování: otevřít waveform editor a ověřit všechny funkce
+- [ ] 7.4 Ověřit, že characterization testy stále procházejí
+
+## 8. Cleanup
+- [ ] 8.1 Odstranit zakomentovaný kód z WaveformEditorDialog
+- [ ] 8.2 Aktualizovat docstringy a type hints
+- [ ] 8.3 Spustit `mypy ui/waveform/` a opravit type errors
+- [ ] 8.4 Spustit `ruff check ui/waveform/` a opravit lint warnings
+
+## References
+- waveform_viewer.py
+- tests/test_waveform_editor.py
